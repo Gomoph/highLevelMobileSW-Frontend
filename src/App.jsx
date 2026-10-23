@@ -4,6 +4,7 @@ import Login from './pages/Login.jsx';
 import FindId from './pages/FindId.jsx';
 import FindPassword from './pages/FindPassword.jsx';
 import Signup from './pages/Signup.jsx';
+import Footer from './components/Footer.jsx';
 import Home from './components/home/Home.jsx';
 import CreateMeeting from './components/home/CreateMeeting.jsx';
 
@@ -26,11 +27,11 @@ export default function App() {
   }
 
   if (screen === 'create' && loginInfo) {
-    return <CreateMeeting onBack={() => setScreen('home')} userName={loginInfo.name} />;
+    return <><CreateMeeting onBack={() => setScreen('home')} userName={loginInfo.name} token={loginInfo.token} /><Footer activeTab="home" /></>;
   }
 
   if (screen === 'home' && loginInfo) {
-    return <Home userName={loginInfo.name} onCreateTap={() => setScreen('create')} />;
+    return <><Home userName={loginInfo.name} onCreateTap={() => setScreen('create')} /><Footer activeTab="home" /></>;
   }
 
   return (

@@ -127,24 +127,35 @@
 }
 .home-categories button.active { border-color: #25272a; color: #fff; background: #25272a; }
 
-.home-content { position: relative; display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; margin-bottom: 94px; }
-.home-map { position: relative; flex: 1 1 auto; min-height: 160px; overflow: hidden; background: #fff; }
+.home-content { position: relative; display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; margin-bottom: 94px; overflow: hidden; }
+.home-map { position: absolute; inset: 0; background: #fff; }
 
 .home-list-panel {
-  position: relative;
+  position: absolute;
   z-index: 1;
   display: flex;
-  flex: 0 0 250px;
   flex-direction: column;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 156px;
+  max-height: 88%;
   min-height: 145px;
   padding: 0 16px;
   border-top: 1px solid #e8e9eb;
   border-radius: 18px 18px 0 0;
   background: #fff;
   box-shadow: 0 -4px 14px #292b2e0d;
+  transition: height 280ms cubic-bezier(.2,.75,.25,1), transform 280ms cubic-bezier(.2,.75,.25,1), opacity 180ms ease;
 }
-.home-panel-handle { display: flex; height: 20px; flex: 0 0 auto; justify-content: center; padding-top: 9px; }
+.home-list-panel.expanded { height: 72%; }
+.home-list-panel.hidden { transform: translateY(100%); opacity: 0; pointer-events: none; }
+.home-panel-handle { display: flex; width: 100%; height: 24px; flex: 0 0 auto; justify-content: center; padding: 9px 0 0; border: 0; background: transparent; cursor: grab; touch-action: none; }
+.home-panel-handle:active { cursor: grabbing; }
 .home-panel-handle span { width: 36px; height: 4px; border-radius: 4px; background: #d8dade; }
+.home-list-reopen { position: absolute; z-index: 2; right: 14px; bottom: 10px; display: flex; align-items: center; gap: 7px; padding: 10px 13px; border: 1px solid rgba(255,255,255,.85); border-radius: 999px; color: #292b2e; background: rgba(255,255,255,.88); box-shadow: 0 5px 16px #2222; font-size: 11px; cursor: pointer; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.home-list-reopen b { color: #858990; font-size: 10px; }
+.home-list-reopen > span:last-child { color: #777b81; font-size: 14px; }
 .home-list-heading { flex: 0 0 auto; padding: 1px 0 7px; }
 .home-list-heading h2 { margin: 0; font-size: 14px; font-weight: 700; }
 .home-list-heading h2 span { margin-left: 4px; color: #9a9da2; font-size: 11px; font-weight: 500; }

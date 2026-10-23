@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import './Home.css';
-import BottomNav from '../BottomNav.jsx';
 
 const CATEGORIES = ['전체', '운동', '카페', '맛집', '전시', '보드게임', '스터디', '기타'];
 const MEETINGS = [
@@ -42,14 +41,46 @@ export default function Home({ userName, onCreateTap }) {
   const [category, setCategory] = useState('전체');
   const [query, setQuery] = useState('');
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [listExpanded, setListExpanded] = useState(false);
+  const [listHidden, setListHidden] = useState(false);
   const [address, setAddress] = useState('서울시 중랑구 면목동');
   const [notice, setNotice] = useState('');
+  const panelDrag = useRef({ startY: 0, moved: false });
 
   const meetings = useMemo(() => MEETINGS.filter((meeting) => {
     const matchesCategory = category === '전체' || meeting.category === category;
     const searchText = `${meeting.title} ${meeting.place} ${meeting.category}`;
     return matchesCategory && searchText.includes(query.trim());
   }), [category, query]);
+
+  function handlePanelPointerDown(event) {
+    panelDrag.current = { startY: event.clientY, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePanelPointerUp(event) {
+    const distance = event.clientY - panelDrag.current.startY;
+    if (Math.abs(distance) > 24) {
+      panelDrag.current.moved = true;
+      if (distance < 0) {
+        setListHidden(false);
+        setListExpanded(true);
+      } else if (listExpanded) {
+        setListExpanded(false);
+      } else {
+        setListHidden(true);
+      }
+      window.setTimeout(() => { panelDrag.current.moved = false; }, 0);
+    }
+  }
+
+  function togglePanel() {
+    if (panelDrag.current.moved) {
+      panelDrag.current.moved = false;
+      return;
+    }
+    setListExpanded((expanded) => !expanded);
+  }
 
   return (
     <div className="home-page">
@@ -82,17 +113,25 @@ export default function Home({ userName, onCreateTap }) {
       <main className="home-content">
         <section className="home-map" aria-label="지도 영역" />
 
-        <section className="home-list-panel">
-          <div className="home-panel-handle" aria-hidden="true"><span /></div>
+        <section className={`home-list-panel${listExpanded ? ' expanded' : ''}${listHidden ? ' hidden' : ''}`} aria-hidden={listHidden}>
+          <button
+            type="button"
+            className="home-panel-handle"
+            aria-label={listExpanded ? '주변 모임 목록 접기' : '주변 모임 목록 펼치기'}
+            aria-expanded={listExpanded}
+            onPointerDown={handlePanelPointerDown}
+            onPointerUp={handlePanelPointerUp}
+            onClick={togglePanel}
+          ><span /></button>
           <div className="home-list-heading"><div><h2>{selectedMeeting ? '선택한 모임' : '내 주변 모임'} <span>{meetings.length}</span></h2><p>가까운 곳에서, 새로운 만남을 시작해요</p></div><button onClick={() => setNotice('모임 정렬은 준비 중입니다.')}>최신순⌄</button></div>
           <div className="home-meeting-list">
             {(selectedMeeting ? meetings.filter((meeting) => meeting.id === selectedMeeting.id) : meetings).map((meeting) => <MeetingCard key={meeting.id} meeting={meeting} selected={selectedMeeting?.id === meeting.id} onSelect={() => setSelectedMeeting(meeting)} />)}
             {meetings.length === 0 && <p className="home-empty">검색 결과가 없어요. 다른 장소나 모임을 검색해보세요.</p>}
           </div>
         </section>
+        {listHidden && <button type="button" className="home-list-reopen" onClick={() => { setListHidden(false); setListExpanded(false); }}><span>주변 모임</span><b>{meetings.length}</b><span aria-hidden="true">⌃</span></button>}
       </main>
       {notice && <div role="status" className="home-toast"><span>{notice}</span><button aria-label="닫기" onClick={() => setNotice('')}>×</button></div>}
-      <BottomNav />
     </div>
   );
 }
