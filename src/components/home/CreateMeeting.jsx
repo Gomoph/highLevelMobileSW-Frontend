@@ -139,6 +139,7 @@ export default function CreateMeeting({ onBack, userName, token }) {
     setIsSubmitting(true);
     setMessage('모임을 등록하고 있습니다.');
 
+    // 토큰과 작성한 내용 전송
     try {
       const result = await createMeeting({
         token,
@@ -146,13 +147,11 @@ export default function CreateMeeting({ onBack, userName, token }) {
           title: title.trim(),
           category,
           description: description.trim(),
-          placeName: place.trim(),
-          latitude: null,
-          longitude: null,
-          startsAt: `${date}T${time}:00`,
+          place: place.trim(),
+          date,
+          time,
           maxMembers: count,
         },
-        images,
       });
 
       setMessage(
@@ -258,7 +257,7 @@ export default function CreateMeeting({ onBack, userName, token }) {
               </div>
             ))}
           </div>
-          <p className="create-help">최대 5장 · JPG, PNG</p>
+          <p className="create-help">이미지는 현재 백엔드 등록 필드에 없어 요청에 포함되지 않습니다.</p>
         </FormSection>
 
         <FormSection number="05" title="장소" icon="pin">
