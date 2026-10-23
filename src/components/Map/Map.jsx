@@ -22,7 +22,7 @@ export default function Map() {
     }
   }, []);
 
-  // 2. 검색 제출 처리 함수
+  // 2. 검색 제출 처리 함수/
   const handleSearch = (e) => {
     e.preventDefault();
     if (!keyword.trim()) {

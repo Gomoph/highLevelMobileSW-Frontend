@@ -1,75 +1,78 @@
-.mobile-bottom-nav {
+.mobile-bottom-nav.glass-dock {
   position: fixed;
-  bottom: 0;
-  left: 0;
-
-  width: 100%;
-  height: 70px;
-
+  z-index: 1000;
+  right: auto;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 50%;
   display: flex;
+  width: min(400px, calc(100% - 28px));
+  height: 68px;
   align-items: center;
   justify-content: space-around;
-
-  background-color: white;
-  border-top: 1px solid #e5e5e5;
-
-  z-index: 1000;
+  padding: 5px 14px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 8px 28px rgba(25, 31, 38, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(22px) saturate(1.45);
+  backdrop-filter: blur(22px) saturate(1.45);
 }
 
-.mb-item {
-  flex: 1;
-  height: 100%;
-
+.glass-dock-item {
   display: flex;
+  width: 33.333%;
+  height: 100%;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-
-  gap: 3px;
-
-  border: none;
-  background: none;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 17px;
+  color: #a1a4a9;
+  background: transparent;
   cursor: pointer;
-
-  font-size: 11px;
-  color: #666;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.mb-item .material-symbols-outlined {
-  font-size: 25px;
+.glass-dock-item svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-/* 가운데 + 버튼 */
-.mb-add {
-  flex: none;
-
-  width: 52px;
-  height: 52px;
-
-  margin: 0 12px;
-
-  border-radius: 50%;
-  background-color: #111;
-  color: white;
-}
-
-.mb-add .material-symbols-outlined {
-  font-size: 32px;
-}
+.glass-dock-item-active { color: #17191c; }
+.glass-dock-item-active svg { stroke-width: 2; }
+.glass-dock-label,
+.glass-dock-label-active { font-size: 10px; line-height: 1; }
+.glass-dock-label { color: #92969c; font-weight: 500; }
+.glass-dock-label-active { color: #202226; font-weight: 700; }
+.glass-dock-item:focus-visible { outline: 2px solid #41454b; outline-offset: -2px; }
 
 .toast-message {
   position: fixed;
-  bottom: 90px;
+  z-index: 1100;
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 82px);
   left: 50%;
+  max-width: calc(100% - 32px);
+  padding: 11px 16px;
   transform: translateX(-50%);
-
-  padding: 10px 18px;
-  border-radius: 8px;
-
-  background-color: #333;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
   color: white;
+  background: rgba(35, 38, 42, 0.9);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  font-size: 12px;
+  text-align: center;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+}
 
-  font-size: 14px;
-
-  z-index: 2000;
+@media (prefers-reduced-transparency: reduce) {
+  .mobile-bottom-nav.glass-dock { background: rgba(255, 255, 255, 0.96); }
 }

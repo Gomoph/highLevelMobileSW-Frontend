@@ -5,7 +5,7 @@ import FindId from './pages/FindId.jsx';
 import FindPassword from './pages/FindPassword.jsx';
 import Signup from './pages/Signup.jsx';
 import Home from './components/home/Home.jsx';
-import Map from './components/Map/Map.jsx';
+import CreateMeeting from './components/home/CreateMeeting.jsx';
 
 export default function App() {
   const [screen, setScreen] = useState('login');
@@ -25,8 +25,12 @@ export default function App() {
     return <Signup onBack={() => setScreen('login')} />;
   }
 
+  if (screen === 'create' && loginInfo) {
+    return <CreateMeeting onBack={() => setScreen('home')} userName={loginInfo.name} />;
+  }
+
   if (screen === 'home' && loginInfo) {
-    return <Home userName={loginInfo.name} />;
+    return <Home userName={loginInfo.name} onCreateTap={() => setScreen('create')} />;
   }
 
   return (

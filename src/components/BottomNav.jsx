@@ -1,62 +1,59 @@
-// components/BottomNav.jsx
-
+import { useEffect, useState } from 'react';
 import './BottomNav.css';
-import { useState, useEffect } from 'react';
 
-export default function BottomNav() {
-  const [toastMessage, setToastMessage] = useState('');
+const NAV_ITEMS = [
+  { id: 'mypage', label: '마이', message: '마이페이지는 준비 중입니다.' },
+  { id: 'home', label: '홈', message: '' },
+  { id: 'fav', label: '찜', message: '찜 목록은 준비 중입니다.' },
+];
 
-  function handleClick(message) {
-    setToastMessage(message);
+function NavIcon({ name }) {
+  if (name === 'mypage') {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
   }
 
-  // toastMessage가 변경될 때 실행
+  if (name === 'fav') {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1 7.8 7.7 7.8-7.7 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg>;
+  }
+
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2h-4v-9H9v9H5a2 2 0 0 1-2-2z"/></svg>;
+}
+
+export default function BottomNav() {
+  const [activeTab, setActiveTab] = useState('home');
+  const [toastMessage, setToastMessage] = useState('');
+
   useEffect(() => {
-    // 메시지가 없으면 아무것도 하지 않음
-    if (!toastMessage) return;
+    if (!toastMessage) return undefined;
 
-    // 2초 후 메시지 제거
-    const timer = setTimeout(() => {
-      setToastMessage('');
-    }, 2000);
-
-    // 기존 타이머 정리
-    return () => {
-      clearTimeout(timer);
-    };
+    const timer = setTimeout(() => setToastMessage(''), 2000);
+    return () => clearTimeout(timer);
   }, [toastMessage]);
+
+  function handleClick(item) {
+    if (item.id === 'home') setActiveTab('home');
+    setToastMessage(item.message);
+  }
 
   return (
     <>
-      {toastMessage && <div className="toast-message">{toastMessage}</div>}
-
-      <nav className="mobile-bottom-nav">
-        <button
-          className="mb-item"
-          onClick={() => handleClick('홈 버튼을 클릭했습니다.')}>
-          <span className="material-symbols-outlined">home</span>
-          <span>홈</span>
-        </button>
-
-        <button
-          className="mb-item mb-add"
-          onClick={() => handleClick('새 모임을 추가합니다.')}>
-          <span className="material-symbols-outlined">add</span>
-        </button>
-
-        {/* <button
-          className="mb-item"
-          onClick={() => handleClick('찜 목록을 확인합니다.')}>
-          <span className="material-symbols-outlined">favorite</span>
-          <span>찜</span>
-        </button> */}
-
-        <button
-          className="mb-item"
-          onClick={() => handleClick('마이페이지로 이동합니다.')}>
-          <span className="material-symbols-outlined">account_circle</span>
-          <span>마이페이지</span>
-        </button>
+      {toastMessage && <div role="status" className="toast-message">{toastMessage}</div>}
+      <nav className="mobile-bottom-nav glass-dock" aria-label="하단 메뉴">
+        {NAV_ITEMS.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={`glass-dock-item${isActive ? ' glass-dock-item-active' : ''}`}
+              aria-current={isActive ? 'page' : undefined}
+              onClick={() => handleClick(item)}
+            >
+              <NavIcon name={item.id} />
+              <span className={isActive ? 'glass-dock-label-active' : 'glass-dock-label'}>{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
     </>
   );
