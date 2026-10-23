@@ -147,9 +147,10 @@ export default function CreateMeeting({ onBack, userName, token }) {
           title: title.trim(),
           category,
           description: description.trim(),
-          place: place.trim(),
-          date,
-          time,
+          placeName: place.trim(),
+          latitude: null,
+          longitude: null,
+          startsAt: `${date}T${time}:00`,
           maxMembers: count,
         },
       });
@@ -159,6 +160,7 @@ export default function CreateMeeting({ onBack, userName, token }) {
           ? `모임이 등록되었습니다. (번호: ${result.id})`
           : '모임이 등록되었습니다.',
       );
+      onBack();
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : '모임 등록에 실패했습니다.',
@@ -257,7 +259,9 @@ export default function CreateMeeting({ onBack, userName, token }) {
               </div>
             ))}
           </div>
-          <p className="create-help">이미지는 현재 백엔드 등록 필드에 없어 요청에 포함되지 않습니다.</p>
+          <p className="create-help">
+            이미지는 현재 백엔드 등록 필드에 없어 요청에 포함되지 않습니다.
+          </p>
         </FormSection>
 
         <FormSection number="05" title="장소" icon="pin">
