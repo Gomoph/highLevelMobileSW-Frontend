@@ -1,4 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
+import { getMeetings } from '../../api/meetings.js';
+import Map from '../Map/Map.jsx';
 import './Home.css';
 
 const CATEGORIES = [
@@ -135,7 +137,7 @@ function MeetingCard({ meeting, selected, onSelect }) {
   );
 }
 
-export default function Home({ userName, onCreateTap }) {
+export default function Home({ userName, onCreateTap, onLocationSelect }) {
   const [category, setCategory] = useState('전체');
   const [query, setQuery] = useState('');
   const [selectedMeeting, setSelectedMeeting] = useState(null);
@@ -145,6 +147,7 @@ export default function Home({ userName, onCreateTap }) {
   const [notice, setNotice] = useState('');
   const panelDrag = useRef({ startY: 0, moved: false });
 
+  // 미팅 카드
   const meetings = useMemo(
     () =>
       MEETINGS.filter((meeting) => {
@@ -253,11 +256,16 @@ export default function Home({ userName, onCreateTap }) {
       </header>
 
       <main className="home-content">
-        <section className="home-map" aria-label="지도 영역" />
+        {/* 지도 화면에 출력 */}
+        <section className="home-map" aria-label="지도 영역">
+          <Map onLocationSelect={onLocationSelect} />
+        </section>
 
+        {/* 모임 카드 영역 */}
         <section
           className={`home-list-panel${listExpanded ? ' expanded' : ''}${listHidden ? ' hidden' : ''}`}
           aria-hidden={listHidden}>
+          {/* 모임 카드 접고 펴는 버튼 */}
           <button
             type="button"
             className="home-panel-handle"
@@ -270,6 +278,7 @@ export default function Home({ userName, onCreateTap }) {
             onClick={togglePanel}>
             <span />
           </button>
+          {/* 모임 카드 헤더 */}
           <div className="home-list-heading">
             <div>
               <h2>
@@ -279,9 +288,10 @@ export default function Home({ userName, onCreateTap }) {
               <p>가까운 곳에서, 새로운 만남을 시작해요</p>
             </div>
             <button onClick={() => setNotice('모임 정렬은 준비 중입니다.')}>
-              최신순⌄
+              최신순 ⌄
             </button>
           </div>
+          {/* 모임 카드 필터링 영역 */}
           <div className="home-meeting-list">
             {(selectedMeeting
               ? meetings.filter((meeting) => meeting.id === selectedMeeting.id)
@@ -301,6 +311,7 @@ export default function Home({ userName, onCreateTap }) {
             )}
           </div>
         </section>
+        {/* 모임 카드 리스트 안보이게 하기 (지도 전체화면) */}
         {listHidden && (
           <button
             type="button"

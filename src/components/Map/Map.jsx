@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-export default function Map() {
+export default function Map({ onLocationSelect }) {
   const [map, setMap] = useState(null);
-  const [marker, setMarker] = useState(null);
+  const markerRef = useRef(null);
   const [keyword, setKeyword] = useState('');
   const [places, setPlaces] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
+  const [selectedAddress, setSelectedAddress] = useState('');
 
   // 1. 지도 최초 초기화
   useEffect(() => {
@@ -18,9 +19,44 @@ export default function Map() {
         };
         const mapInstance = new window.kakao.maps.Map(container, options);
         setMap(mapInstance);
+        const geocoder = new window.kakao.maps.services.Geocoder();
+
+        window.kakao.maps.event.addListener(mapInstance, 'click', (e) => {
+          const position = e.latLng;
+          const latitude = position.getLat();
+          const longitude = position.getLng();
+
+          if (markerRef.current) {
+            markerRef.current.setMap(null);
+          }
+
+          const nextMarker = new window.kakao.maps.Marker({ position });
+          nextMarker.setMap(mapInstance);
+          markerRef.current = nextMarker;
+          setSelectedPlace(null);
+          setSelectedAddress('주소를 찾는 중…');
+
+          // 카카오 역지오코딩은 경도, 위도 순서로 좌표를 받습니다.
+          // (위도, 경도) => 장소 이름 변환
+          geocoder.coord2Address(longitude, latitude, (result, status) => {
+            if (status === window.kakao.maps.services.Status.OK) {
+              const placeName =
+                result[0]?.road_address?.address_name ||
+                result[0]?.address?.address_name ||
+                '';
+
+              setSelectedAddress(placeName || '주소를 찾을 수 없습니다.');
+              onLocationSelect?.({ latitude, longitude, placeName });
+              return;
+            }
+
+            setSelectedAddress('주소를 찾을 수 없습니다.');
+            onLocationSelect?.({ latitude, longitude });
+          });
+        });
       });
     }
-  }, []);
+  }, [onLocationSelect]);
 
   // 2. 검색 제출 처리 함수/
   const handleSearch = (e) => {
@@ -62,17 +98,24 @@ export default function Map() {
     map.setLevel(3);
 
     // 기존 마커 지우고 새 마커 생성
-    if (marker) {
-      marker.setMap(null);
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
     }
 
     const newMarker = new window.kakao.maps.Marker({
       position: moveLatLon,
     });
     newMarker.setMap(map);
-    setMarker(newMarker);
+    markerRef.current = newMarker;
 
     setSelectedPlace(place);
+    setSelectedAddress('');
+    // 검색 결과 전달하는 값
+    onLocationSelect?.({
+      placeName: place.place_name,
+      latitude: Number(place.y),
+      longitude: Number(place.x),
+    });
   };
 
   return (
@@ -85,7 +128,7 @@ export default function Map() {
           type="text"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          placeholder="건물명이나 상호명을 입력하세요 (예: 한성대학교, 스타벅스)"
+          placeholder="건물명이나 상호명을 입력하세요 (예: 한성대학교 )"
           style={{
             flex: 1,
             padding: '12px',
@@ -131,7 +174,20 @@ export default function Map() {
             border: '1px solid #b6d4fe',
           }}>
           🎯 <strong>선택된 위치:</strong> {selectedPlace.place_name} (
-          {selectedPlace.address_name})
+          {selectedPlace.road_address_name || selectedPlace.address_name})
+        </div>
+      )}
+
+      {selectedAddress && (
+        <div
+          style={{
+            padding: '12px',
+            backgroundColor: '#eef6ff',
+            borderRadius: '8px',
+            marginBottom: '15px',
+            border: '1px solid #b6d4fe',
+          }}>
+          📍 <strong>선택한 주소:</strong> {selectedAddress}
         </div>
       )}
 

@@ -101,13 +101,18 @@ function FormSection({ number, title, icon, children }) {
 }
 
 // 모임 등록
-export default function CreateMeeting({ onBack, userName, token }) {
+export default function CreateMeeting({
+  onBack,
+  userName,
+  token,
+  selectedLocation,
+}) {
   const imageInput = useRef(null);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [images, setImages] = useState([]);
-  const [place, setPlace] = useState('');
+  const [place, setPlace] = useState(selectedLocation?.placeName ?? ''); // 선택한 초기값 설정 (선택한 주소 검색창에 자동 입력, 없으면 빈 칸)
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [count, setCount] = useState(4);
@@ -147,9 +152,9 @@ export default function CreateMeeting({ onBack, userName, token }) {
           title: title.trim(),
           category,
           description: description.trim(),
-          placeName: place.trim(),
-          latitude: null,
-          longitude: null,
+          placeName: selectedLocation?.placeName || place.trim(),
+          latitude: selectedLocation?.latitude ?? null,
+          longitude: selectedLocation?.longitude ?? null,
           startsAt: `${date}T${time}:00`,
           maxMembers: count,
         },
