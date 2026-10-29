@@ -32,7 +32,7 @@ export default function App() {
   }
 
   if (screen === 'home' && loginInfo) {
-    return <><Home userName={loginInfo.name} onCreateTap={() => setScreen('create')} onLocationSelect={setSelectedLocation} /><Footer activeTab="home" /></>;
+    return <><Home userName={loginInfo.name} token={loginInfo.token} onCreateTap={() => setScreen('create')} onLocationSelect={setSelectedLocation} /><Footer activeTab="home" /></>;
   }
 
   return (

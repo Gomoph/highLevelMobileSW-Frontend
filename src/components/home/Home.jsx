@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getMeetings } from '../../api/meetings.js';
 import Map from '../Map/Map.jsx';
 import './Home.css';
@@ -13,72 +13,6 @@ const CATEGORIES = [
   '스터디',
   '기타',
 ];
-const MEETINGS = [
-  {
-    id: 1,
-    title: '보드게임 같이 할 사람',
-    category: '보드게임',
-    place: '상봉역 보드게임카페',
-    date: '오늘 18:30',
-    members: '2 / 5명',
-    distance: 1.2,
-  },
-  {
-    id: 2,
-    title: '저녁 러닝, 가볍게 함께해요',
-    category: '운동',
-    place: '중랑천 산책로',
-    date: '오늘 19:00',
-    members: '3 / 6명',
-    distance: 0.4,
-  },
-  {
-    id: 3,
-    title: '커피 한 잔, 동네 친구 만들기',
-    category: '카페',
-    place: '면목역 카페 모퉁이',
-    date: '내일 14:00',
-    members: '2 / 4명',
-    distance: 0.6,
-  },
-  {
-    id: 4,
-    title: '퇴근 후 함께 집중하는 스터디',
-    category: '스터디',
-    place: '사가정역 스터디카페',
-    date: '오늘 20:00',
-    members: '3 / 4명',
-    distance: 0.8,
-  },
-  {
-    id: 5,
-    title: '동네 숨은 맛집 탐방',
-    category: '맛집',
-    place: '면목동 골목식당',
-    date: '내일 12:00',
-    members: '2 / 5명',
-    distance: 0.3,
-  },
-  {
-    id: 6,
-    title: '작은 전시, 함께 감상해요',
-    category: '전시',
-    place: '중랑아트센터',
-    date: '내일 15:00',
-    members: '2 / 6명',
-    distance: 1.5,
-  },
-  {
-    id: 7,
-    title: '주말 동네 산책 메이트',
-    category: '기타',
-    place: '면목체육공원',
-    date: '내일 10:00',
-    members: '2 / 4명',
-    distance: 0.9,
-  },
-];
-
 function PinIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -88,16 +22,18 @@ function PinIcon() {
   );
 }
 
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="10.8" cy="10.8" r="6.8" />
-      <path d="m16 16 5 5" />
-    </svg>
-  );
-}
-
 function MeetingCard({ meeting, selected, onSelect }) {
+  const placeName = meeting.placeName ?? meeting.place ?? '장소 미정';
+  const startsAt = meeting.startsAt ?? meeting.date;
+  const formattedStartsAt = startsAt
+    ? String(startsAt).replace('T', ' ').slice(0, 16)
+    : '일정 미정';
+  const distance = Number(meeting.distance);
+  const hasDistance =
+    meeting.distance !== null &&
+    meeting.distance !== undefined &&
+    Number.isFinite(distance);
+
   return (
     <button
       className={`home-meeting-card${selected ? ' is-selected' : ''}`}
@@ -114,22 +50,26 @@ function MeetingCard({ meeting, selected, onSelect }) {
           <span>{meeting.category}</span>
           <i>·</i>
           <b>모집중</b>
-          <span className="home-distance">{meeting.distance.toFixed(1)}km</span>
+          {hasDistance && (
+            <span className="home-distance">{distance.toFixed(1)}km</span>
+          )}
         </span>
         <strong>{meeting.title}</strong>
         <span className="home-detail-line">
           <PinIcon />
-          {meeting.place}
+          {placeName}
         </span>
         <span className="home-detail-line">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
             <path d="M12 7v5l3 2" />
           </svg>
-          {meeting.date}
+          {formattedStartsAt}
         </span>
         <span className="home-meeting-members">
-          {meeting.members}
+          {meeting.currentMembers != null
+            ? `${meeting.currentMembers} / ${meeting.maxMembers}명`
+            : `최대 ${meeting.maxMembers ?? '-'}명`}
           <span>모임 보기 ›</span>
         </span>
       </span>
@@ -137,9 +77,17 @@ function MeetingCard({ meeting, selected, onSelect }) {
   );
 }
 
-export default function Home({ userName, onCreateTap, onLocationSelect }) {
+export default function Home({
+  userName,
+  token,
+  onCreateTap,
+  onLocationSelect,
+}) {
   const [category, setCategory] = useState('전체');
-  const [query, setQuery] = useState('');
+
+  const [allMeetings, setAllMeetings] = useState([]);
+  const [meetingsLoading, setMeetingsLoading] = useState(true);
+  const [meetingsError, setMeetingsError] = useState('');
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [listExpanded, setListExpanded] = useState(false);
   const [listHidden, setListHidden] = useState(false);
@@ -147,17 +95,50 @@ export default function Home({ userName, onCreateTap, onLocationSelect }) {
   const [notice, setNotice] = useState('');
   const panelDrag = useRef({ startY: 0, moved: false });
 
-  // 미팅 카드
+  useEffect(() => {
+    let isCurrentRequest = true;
+
+    getMeetings(token)
+      .then((result) => {
+        const meetingList = Array.isArray(result) ? result : result?.meetings;
+
+        if (!Array.isArray(meetingList)) {
+          throw new Error('백엔드 응답이 모임 목록 형식이 아닙니다.');
+        }
+
+        if (isCurrentRequest) setAllMeetings(meetingList);
+      })
+      .catch((error) => {
+        if (isCurrentRequest) {
+          setMeetingsError(
+            error instanceof Error
+              ? error.message
+              : '모임 목록을 불러오지 못했습니다.',
+          );
+        }
+      })
+      .finally(() => {
+        if (isCurrentRequest) setMeetingsLoading(false);
+      });
+
+    return () => {
+      isCurrentRequest = false;
+    };
+  }, [token]);
+
   const meetings = useMemo(
     () =>
-      MEETINGS.filter((meeting) => {
+      allMeetings.filter((meeting) => {
         const matchesCategory =
           category === '전체' || meeting.category === category;
-        const searchText = `${meeting.title} ${meeting.place} ${meeting.category}`;
-        return matchesCategory && searchText.includes(query.trim());
+        return matchesCategory;
       }),
-    [category, query],
+    [allMeetings, category],
   );
+
+  const displayedMeetings = selectedMeeting
+    ? meetings.filter((meeting) => meeting.id === selectedMeeting.id)
+    : meetings;
 
   function handlePanelPointerDown(event) {
     panelDrag.current = { startY: event.clientY, moved: false };
@@ -225,20 +206,6 @@ export default function Home({ userName, onCreateTap, onLocationSelect }) {
           </div>
         </div>
         <h1>{userName || '하민'}님, 오늘은 어디에서 함께할까요?</h1>
-        <label className="home-search">
-          <SearchIcon />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="장소나 지역을 검색해보세요"
-            aria-label="모임 검색"
-          />
-          {query && (
-            <button aria-label="검색어 지우기" onClick={() => setQuery('')}>
-              ×
-            </button>
-          )}
-        </label>
         <div className="home-categories" aria-label="모임 카테고리">
           {CATEGORIES.map((item) => (
             <button
@@ -293,10 +260,7 @@ export default function Home({ userName, onCreateTap, onLocationSelect }) {
           </div>
           {/* 모임 카드 필터링 영역 */}
           <div className="home-meeting-list">
-            {(selectedMeeting
-              ? meetings.filter((meeting) => meeting.id === selectedMeeting.id)
-              : meetings
-            ).map((meeting) => (
+            {displayedMeetings.map((meeting) => (
               <MeetingCard
                 key={meeting.id}
                 meeting={meeting}
@@ -304,9 +268,15 @@ export default function Home({ userName, onCreateTap, onLocationSelect }) {
                 onSelect={() => setSelectedMeeting(meeting)}
               />
             ))}
-            {meetings.length === 0 && (
+            {meetingsLoading && (
+              <p className="home-empty">모임 목록을 불러오는 중이에요.</p>
+            )}
+            {!meetingsLoading && meetingsError && (
+              <p className="home-empty">{meetingsError}</p>
+            )}
+            {!meetingsLoading && !meetingsError && meetings.length === 0 && (
               <p className="home-empty">
-                검색 결과가 없어요. 다른 장소나 모임을 검색해보세요.
+                아직 등록된 모임이 없어요.
               </p>
             )}
           </div>

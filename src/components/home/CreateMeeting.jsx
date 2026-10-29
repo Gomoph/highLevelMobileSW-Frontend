@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './CreateMeeting.css';
 import { createMeeting } from '../../api/meetings.js';
 
@@ -108,16 +108,86 @@ export default function CreateMeeting({
   selectedLocation,
 }) {
   const imageInput = useRef(null);
+  const placeSearchTimer = useRef(null);
+  const placeSearchSequence = useRef(0);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [images, setImages] = useState([]);
-  const [place, setPlace] = useState(selectedLocation?.placeName ?? ''); // 선택한 초기값 설정 (선택한 주소 검색창에 자동 입력, 없으면 빈 칸)
+  const [place, setPlace] = useState(selectedLocation?.placeName ?? '');
+  const [placeSelection, setPlaceSelection] = useState(selectedLocation ?? null);
+  const [placeResults, setPlaceResults] = useState([]);
+  const [placeSearchMessage, setPlaceSearchMessage] = useState('');
+  const [placeSearchOpen, setPlaceSearchOpen] = useState(false);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [count, setCount] = useState(4);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // 전송
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(placeSearchTimer.current);
+      placeSearchSequence.current += 1;
+    },
+    [],
+  );
+
+  function handlePlaceChange(event) {
+    const value = event.target.value;
+    const keyword = value.trim();
+    const requestSequence = ++placeSearchSequence.current;
+
+    window.clearTimeout(placeSearchTimer.current);
+    setPlace(value);
+    setPlaceSelection(null);
+    setPlaceResults([]);
+    setPlaceSearchMessage('');
+    setPlaceSearchOpen(keyword.length >= 2);
+
+    if (keyword.length < 2) return;
+
+    placeSearchTimer.current = window.setTimeout(() => {
+      if (!window.kakao?.maps?.services) {
+        setPlaceSearchMessage('장소 검색 서비스를 불러오지 못했습니다.');
+        return;
+      }
+
+      setPlaceSearchMessage('장소를 검색하고 있어요.');
+      const placesService = new window.kakao.maps.services.Places();
+
+      placesService.keywordSearch(keyword, (results, status) => {
+        if (requestSequence !== placeSearchSequence.current) return;
+
+        if (status === window.kakao.maps.services.Status.OK) {
+          setPlaceResults(results.slice(0, 6));
+          setPlaceSearchMessage('');
+        } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+          setPlaceResults([]);
+          setPlaceSearchMessage('검색 결과가 없습니다.');
+        } else {
+          setPlaceResults([]);
+          setPlaceSearchMessage('장소 검색에 실패했습니다. 다시 시도해주세요.');
+        }
+      });
+    }, 250);
+  }
+
+  function handlePlaceSelect(result) {
+    window.clearTimeout(placeSearchTimer.current);
+    placeSearchSequence.current += 1;
+
+    setPlace(result.place_name);
+    setPlaceSelection({
+      placeName: result.place_name,
+      address: result.road_address_name || result.address_name,
+      latitude: Number(result.y),
+      longitude: Number(result.x),
+    });
+    setPlaceResults([]);
+    setPlaceSearchMessage('');
+    setPlaceSearchOpen(false);
+  }
 
   // 이미지 추가
   function addImages(event) {
@@ -152,9 +222,9 @@ export default function CreateMeeting({
           title: title.trim(),
           category,
           description: description.trim(),
-          placeName: selectedLocation?.placeName || place.trim(),
-          latitude: selectedLocation?.latitude ?? null,
-          longitude: selectedLocation?.longitude ?? null,
+          placeName: place.trim(),
+          latitude: placeSelection?.latitude ?? null,
+          longitude: placeSelection?.longitude ?? null,
           startsAt: `${date}T${time}:00`,
           maxMembers: count,
         },
@@ -270,17 +340,55 @@ export default function CreateMeeting({
         </FormSection>
 
         <FormSection number="05" title="장소" icon="pin">
-          <label className="create-place-input">
-            <Icon name="search" />
-            <input
-              value={place}
-              onChange={(event) => setPlace(event.target.value)}
-              placeholder="장소를 검색하거나 입력하세요"
-              required
-            />
-          </label>
+          <div className="create-place-autocomplete">
+            <label className="create-place-input">
+              <Icon name="search" />
+              <input
+                value={place}
+                onChange={handlePlaceChange}
+                onFocus={() => {
+                  if (place.trim().length >= 2) setPlaceSearchOpen(true);
+                }}
+                placeholder="장소명이나 주소를 검색하세요"
+                autoComplete="off"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={placeSearchOpen && placeResults.length > 0}
+                aria-controls="create-place-results"
+                required
+              />
+            </label>
+            {placeSearchOpen &&
+              (placeResults.length > 0 || placeSearchMessage) && (
+                <div className="create-place-dropdown">
+                  {placeSearchMessage && (
+                    <p className="create-place-search-message">
+                      {placeSearchMessage}
+                    </p>
+                  )}
+                  {placeResults.length > 0 && (
+                    <ul id="create-place-results" role="listbox">
+                      {placeResults.map((result) => (
+                        <li key={result.id}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={false}
+                            onClick={() => handlePlaceSelect(result)}>
+                            <strong>{result.place_name}</strong>
+                            <span>
+                              {result.road_address_name || result.address_name}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+          </div>
           <p className="create-help">
-            지도 검색 연동 후 장소와 좌표를 선택할 수 있어요.
+            목록에서 장소를 선택하면 장소명과 좌표가 등록돼요.
           </p>
         </FormSection>
 
