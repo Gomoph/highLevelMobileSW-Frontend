@@ -1,7 +1,8 @@
+// src/pages/home/HomePage.jsx — 지도 범위·카테고리별 모임 조회와 모임 목록 표시
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getMeetings } from '../../api/meetings.js';
-import Map from '../Map/Map.jsx';
-import './Home.css';
+import MeetingMap from '../../components/map/MeetingMap.jsx';
+import './HomePage.css';
 
 const CATEGORIES = [
   '전체',
@@ -77,7 +78,7 @@ function MeetingCard({ meeting, selected, onSelect }) {
   );
 }
 
-export default function Home({
+export default function HomePage({
   userName,
   token,
   onCreateTap,
@@ -250,7 +251,7 @@ export default function Home({
         {/* 지도 화면에 출력 */}
         <section className="home-map" aria-label="지도 영역">
           {/* 지도 컴포넌트 */}
-          <Map
+          <MeetingMap
             onLocationSelect={onLocationSelect}
             onSearchArea={handleSearchArea}
             searching={meetingsLoading}

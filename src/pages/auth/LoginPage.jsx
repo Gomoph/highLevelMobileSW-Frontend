@@ -1,10 +1,10 @@
-// components/pages/Login.jsx
+// src/pages/auth/LoginPage.jsx — 아이디·비밀번호 로그인 및 계정 관련 화면 이동
 
 import { useState } from 'react';
-import LoginField from '../components/login/LoginField.jsx';
-import './Login.css';
+import LoginInputField from '../../components/auth/LoginInputField.jsx';
+import './Auth.css';
 
-export default function Login({
+export default function LoginPage({
   onFindId,
   onFindPassword,
   onSignup,
@@ -110,9 +110,9 @@ export default function Login({
           onSubmit={handleSubmit}
           onChange={() => setMessage('')}>
           {/* 아이디 자동 완성을 지원하는 입력창입니다. */}
-          <LoginField name="userId" label="아이디" autoComplete="username" />
+          <LoginInputField name="userId" label="아이디" autoComplete="username" />
           {/* 비밀번호를 가리고 기존 비밀번호 자동 완성을 지원합니다. */}
-          <LoginField
+          <LoginInputField
             name="password"
             label="비밀번호"
             type="password"

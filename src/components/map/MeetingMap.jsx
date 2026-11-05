@@ -1,7 +1,8 @@
+// src/components/map/MeetingMap.jsx — 카카오 지도 표시와 장소 선택 및 지도 범위 검색 전달
 import { useEffect, useRef, useState } from 'react';
-import './Map.css';
+import './MeetingMap.css';
 
-export default function Map({
+export default function MeetingMap({
   onLocationSelect,
   onSearchArea,
   searching = false,
@@ -130,7 +131,7 @@ export default function Map({
     const southWest = bounds.getSouthWest();
     const northEast = bounds.getNorthEast();
 
-    // 지도에서 얻은 좌표를 Home.jsx로 전달하는 코드
+    // 지도에서 얻은 좌표를 HomePage.jsx로 전달하는 코드
     onSearchArea?.({
       south: southWest.getLat(),
       west: southWest.getLng(),

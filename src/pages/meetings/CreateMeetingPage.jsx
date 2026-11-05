@@ -1,5 +1,6 @@
+// src/pages/meetings/CreateMeetingPage.jsx — 모임 정보와 장소 입력 및 모임 등록 요청 처리
 import { useEffect, useRef, useState } from 'react';
-import './CreateMeeting.css';
+import './CreateMeetingPage.css';
 import { createMeeting } from '../../api/meetings.js';
 
 // 카테고리
@@ -101,7 +102,7 @@ function FormSection({ number, title, icon, children }) {
 }
 
 // 모임 등록
-export default function CreateMeeting({
+export default function CreateMeetingPage({
   onBack,
   userName,
   token,

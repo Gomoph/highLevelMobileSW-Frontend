@@ -1,6 +1,5 @@
-// components/login/LoginField.jsx
-// 로그인에서 공통으로 사용하는 밑줄 형태의 입력 컴포넌트
-export default function LoginField({
+// src/components/auth/LoginInputField.jsx — 로그인 폼에서 재사용하는 라벨과 입력 필드
+export default function LoginInputField({
   name,
   label,
   type = 'text',

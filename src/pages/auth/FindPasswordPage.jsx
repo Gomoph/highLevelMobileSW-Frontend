@@ -1,10 +1,10 @@
-// components/pages/FindPassword.jsx
+// src/pages/auth/FindPasswordPage.jsx — 비밀번호 찾기 폼과 계정·본인 정보 입력 검증
 
 import { useState } from 'react';
-import './Login.css';
-import './FindId.css';
+import './Auth.css';
+import './AccountRecovery.css';
 
-export default function FindPassword({ onBack }) {
+export default function FindPasswordPage({ onBack }) {
   const [message, setMessage] = useState('');
 
   function handleSubmit(event) {

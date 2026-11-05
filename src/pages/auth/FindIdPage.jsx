@@ -1,10 +1,10 @@
-// components/pages/FindId.jsx
+// src/pages/auth/FindIdPage.jsx — 아이디 찾기 폼과 이름·전화번호 입력 검증
 
 import { useState } from 'react';
-import './Login.css';
-import './FindId.css';
+import './Auth.css';
+import './AccountRecovery.css';
 
-export default function FindId({ onBack }) {
+export default function FindIdPage({ onBack }) {
   const [message, setMessage] = useState('');
 
   function handleSubmit(event) {

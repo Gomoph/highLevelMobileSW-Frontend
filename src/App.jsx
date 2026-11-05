@@ -1,12 +1,13 @@
+// src/App.jsx — 로그인 상태와 화면 전환 및 선택 장소를 관리하는 앱 컴포넌트
 import { useState } from 'react';
 import './App.css';
-import Login from './pages/Login.jsx';
-import FindId from './pages/FindId.jsx';
-import FindPassword from './pages/FindPassword.jsx';
-import Signup from './pages/Signup.jsx';
-import Footer from './components/Footer.jsx';
-import Home from './components/home/Home.jsx';
-import CreateMeeting from './components/home/CreateMeeting.jsx';
+import LoginPage from './pages/auth/LoginPage.jsx';
+import FindIdPage from './pages/auth/FindIdPage.jsx';
+import FindPasswordPage from './pages/auth/FindPasswordPage.jsx';
+import SignupPage from './pages/auth/SignupPage.jsx';
+import BottomNavigation from './components/layout/BottomNavigation.jsx';
+import HomePage from './pages/home/HomePage.jsx';
+import CreateMeetingPage from './pages/meetings/CreateMeetingPage.jsx';
 
 export default function App() {
   const [screen, setScreen] = useState('login');
@@ -16,27 +17,27 @@ export default function App() {
 
   // 로그인 페이지로 돌아가는 함수
   if (screen === 'findId') {
-    return <FindId onBack={() => setScreen('login')} />;
+    return <FindIdPage onBack={() => setScreen('login')} />;
   }
 
   if (screen === 'findPassword') {
-    return <FindPassword onBack={() => setScreen('login')} />;
+    return <FindPasswordPage onBack={() => setScreen('login')} />;
   }
 
   if (screen === 'signup') {
-    return <Signup onBack={() => setScreen('login')} />;
+    return <SignupPage onBack={() => setScreen('login')} />;
   }
 
   if (screen === 'create' && loginInfo) {
-    return <><CreateMeeting onBack={() => setScreen('home')} userName={loginInfo.name} token={loginInfo.token} selectedLocation={selectedLocation} /><Footer activeTab="home" /></>;
+    return <><CreateMeetingPage onBack={() => setScreen('home')} userName={loginInfo.name} token={loginInfo.token} selectedLocation={selectedLocation} /><BottomNavigation activeTab="home" /></>;
   }
 
   if (screen === 'home' && loginInfo) {
-    return <><Home userName={loginInfo.name} token={loginInfo.token} onCreateTap={() => setScreen('create')} onLocationSelect={setSelectedLocation} /><Footer activeTab="home" /></>;
+    return <><HomePage userName={loginInfo.name} token={loginInfo.token} onCreateTap={() => setScreen('create')} onLocationSelect={setSelectedLocation} /><BottomNavigation activeTab="home" /></>;
   }
 
   return (
-    <Login
+    <LoginPage
       onLoginSuccess={(info) => {
         setLoginInfo(info);
         setScreen('home');

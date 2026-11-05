@@ -1,8 +1,8 @@
-// components/pages/Signup.jsx
+// src/pages/auth/SignupPage.jsx — 회원 정보 입력과 회원가입 요청 처리
 
 import { useState } from 'react';
-import './Login.css';
-import './Signup.css';
+import './Auth.css';
+import './SignupPage.css';
 
 // input 칸을 map()을 활용하여 동적으로 생성하기 위한 객체 배열
 const fields = [
@@ -70,7 +70,7 @@ function formatPhoneNumber(value) {
   return `${digits.slice(0, areaLength)}-${digits.slice(areaLength, middleEnd)}-${digits.slice(middleEnd)}`;
 }
 
-export default function Signup({ onBack }) {
+export default function SignupPage({ onBack }) {
   // 초기값 & 상태 설정
 
   // 안내 메세지
