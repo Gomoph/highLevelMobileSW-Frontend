@@ -31,12 +31,26 @@ export async function createMeeting({ token, meeting }) {
 }
 
 // 목록 조회
-export async function getMeetings(token) {
-  const response = await fetch(`${API_BASE_URL}/api/meetings`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+export async function getMeetings(token, { bounds, category, signal } = {}) {
+  const params = new URLSearchParams();
+  if (bounds) {
+    for (const key of ['south', 'north', 'west', 'east']) {
+      params.set(key, String(bounds[key]));
+    }
+  }
+  if (category && category !== '전체') params.set('category', category);
+  const query = params.toString();
+
+  // 현재 위치에서 검색 버튼 클릭 시 백엔드에 데이터 전달하는 코드
+  const response = await fetch(
+    `${API_BASE_URL}/api/meetings${query ? `?${query}` : ''}`,
+    {
+      signal,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`모임 목록을 불러오지 못했습니다. (${response.status})`);

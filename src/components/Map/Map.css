@@ -1,0 +1,141 @@
+.map-container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.map-search-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.map-search-input {
+  flex: 1;
+  padding: 12px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.map-search-button {
+  padding: 12px 20px;
+  font-size: 15px;
+  background-color: #fee500;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.map-viewport {
+  position: relative;
+  isolation: isolate;
+  margin-bottom: 20px;
+}
+
+.map-area-search-button {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  max-width: calc(100% - 24px);
+  padding: 10px 18px;
+  transform: translateX(-50%);
+  border: 1px solid #fff;
+  border-radius: 999px;
+  background: #fff;
+  color: #69a7ff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px #0003;
+  cursor: pointer;
+}
+
+.map-area-search-button:focus-visible {
+  outline: 3px solid #69a7ff;
+  outline-offset: 3px;
+}
+
+.map-area-search-button svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.map-canvas {
+  width: 100%;
+  height: 400px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+}
+
+.map-selection-info {
+  padding: 12px;
+  background-color: #eef6ff;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #b6d4fe;
+}
+
+.map-results {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.map-results-heading {
+  margin: 0;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+}
+
+.map-results-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.map-result-item {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  background-color: #fff;
+}
+
+.map-result-item.is-selected {
+  background-color: #f0f0f0;
+}
+
+.map-place-name {
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+}
+
+.map-place-address {
+  font-size: 13px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.map-place-phone {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.map-area-search-button:disabled {
+  opacity: 0.65;
+  cursor: default;
+}

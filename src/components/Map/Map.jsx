@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import './Map.css';
 
-export default function Map({ onLocationSelect }) {
+export default function Map({
+  onLocationSelect,
+  onSearchArea,
+  searching = false,
+}) {
   const [map, setMap] = useState(null);
   const markerRef = useRef(null);
   const [keyword, setKeyword] = useState('');
@@ -118,136 +123,92 @@ export default function Map({ onLocationSelect }) {
     });
   };
 
+  const handleSearchArea = () => {
+    if (!map || searching) return;
+    // 현재 지도의 좌표 가져오는 코드
+    const bounds = map.getBounds();
+    const southWest = bounds.getSouthWest();
+    const northEast = bounds.getNorthEast();
+
+    // 지도에서 얻은 좌표를 Home.jsx로 전달하는 코드
+    onSearchArea?.({
+      south: southWest.getLat(),
+      west: southWest.getLng(),
+      north: northEast.getLat(),
+      east: northEast.getLng(),
+    });
+  };
+
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="map-container">
       {/* 🔍 검색창 폼 */}
-      <form
-        onSubmit={handleSearch}
-        style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+      <form onSubmit={handleSearch} className="map-search-form">
         <input
           type="text"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="건물명이나 상호명을 입력하세요 (예: 한성대학교 )"
-          style={{
-            flex: 1,
-            padding: '12px',
-            fontSize: '15px',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-          }}
+          className="map-search-input"
         />
-        <button
-          type="submit"
-          style={{
-            padding: '12px 20px',
-            fontSize: '15px',
-            backgroundColor: '#FEE500',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-          }}>
+        <button type="submit" className="map-search-button">
           검색
         </button>
       </form>
 
       {/* 🗺️ 지도 영역 */}
-      <div
-        id="map"
-        style={{
-          width: '100%',
-          height: '400px',
-          borderRadius: '12px',
-          border: '1px solid #ccc',
-          marginBottom: '20px',
-        }}></div>
+      <div className="map-viewport">
+        <div id="map" className="map-canvas"></div>
+        <button
+          type="button"
+          className="map-area-search-button"
+          onClick={handleSearchArea}
+          disabled={!map || searching}
+          aria-busy={searching}>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M20 7v5h-5M20 12a8 8 0 1 1-2.34-5.66L20 9"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span>{searching ? '검색 중…' : '현 지도에서 검색'}</span>
+        </button>
+      </div>
 
       {/* 📌 선택한 장소 정보 표시 */}
       {selectedPlace && (
-        <div
-          style={{
-            padding: '12px',
-            backgroundColor: '#eef6ff',
-            borderRadius: '8px',
-            marginBottom: '15px',
-            border: '1px solid #b6d4fe',
-          }}>
+        <div className="map-selection-info">
           🎯 <strong>선택된 위치:</strong> {selectedPlace.place_name} (
           {selectedPlace.road_address_name || selectedPlace.address_name})
         </div>
       )}
 
       {selectedAddress && (
-        <div
-          style={{
-            padding: '12px',
-            backgroundColor: '#eef6ff',
-            borderRadius: '8px',
-            marginBottom: '15px',
-            border: '1px solid #b6d4fe',
-          }}>
+        <div className="map-selection-info">
           📍 <strong>선택한 주소:</strong> {selectedAddress}
         </div>
       )}
 
       {/* 📜 검색 결과 목록 */}
       {places.length > 0 && (
-        <div
-          style={{
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            overflow: 'hidden',
-          }}>
-          <h4
-            style={{
-              margin: 0,
-              padding: '12px',
-              backgroundColor: '#f8f9fa',
-              borderBottom: '1px solid #ddd',
-            }}>
+        <div className="map-results">
+          <h4 className="map-results-heading">
             검색 결과 목록 ({places.length}건)
           </h4>
-          <ul
-            style={{
-              listStyle: 'none',
-              margin: 0,
-              padding: 0,
-              maxHeight: '250px',
-              overflowY: 'auto',
-            }}>
+          <ul className="map-results-list">
             {places.map((place) => (
               <li
                 key={place.id}
                 onClick={() => handleSelectPlace(place)}
-                style={{
-                  padding: '12px',
-                  borderBottom: '1px solid #eee',
-                  cursor: 'pointer',
-                  backgroundColor:
-                    selectedPlace?.id === place.id ? '#f0f0f0' : '#fff',
-                }}>
-                <div
-                  style={{
-                    fontWeight: 'bold',
-                    fontSize: '15px',
-                    color: '#333',
-                  }}>
-                  {place.place_name}
-                </div>
-                <div
-                  style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                className={`map-result-item${selectedPlace?.id === place.id ? ' is-selected' : ''}`}>
+                <div className="map-place-name">{place.place_name}</div>
+                <div className="map-place-address">
                   {place.road_address_name || place.address_name}
                 </div>
                 {place.phone && (
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      color: '#888',
-                      marginTop: '2px',
-                    }}>
-                    📞 {place.phone}
-                  </div>
+                  <div className="map-place-phone">📞 {place.phone}</div>
                 )}
               </li>
             ))}

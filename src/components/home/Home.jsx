@@ -84,6 +84,7 @@ export default function Home({
   onLocationSelect,
 }) {
   const [category, setCategory] = useState('전체');
+  const [searchBounds, setSearchBounds] = useState(null);
 
   const [allMeetings, setAllMeetings] = useState([]);
   const [meetingsLoading, setMeetingsLoading] = useState(true);
@@ -98,7 +99,15 @@ export default function Home({
   useEffect(() => {
     let isCurrentRequest = true;
 
-    getMeetings(token)
+    // 진행 중인 API 요청을 취소할 때 사용하는 객체
+    const controller = new AbortController();
+
+    // 백엔드에 모임 목록 요청
+    getMeetings(token, {
+      bounds: searchBounds, // 서버에 보낼 지도 범위
+      category, // 카테고리
+      signal: controller.signal, // 브라우저에서 요청 취소에 사용
+    })
       .then((result) => {
         const meetingList = Array.isArray(result) ? result : result?.meetings;
 
@@ -123,8 +132,18 @@ export default function Home({
 
     return () => {
       isCurrentRequest = false;
+      controller.abort();
     };
-  }, [token]);
+  }, [token, searchBounds, category]);
+
+  function handleSearchArea(bounds) {
+    setMeetingsLoading(true);
+    setMeetingsError('');
+    setAllMeetings([]);
+    setSelectedMeeting(null);
+    setListHidden(false);
+    setSearchBounds(bounds);
+  }
 
   const meetings = useMemo(
     () =>
@@ -213,6 +232,11 @@ export default function Home({
               aria-pressed={category === item}
               className={category === item ? 'active' : ''}
               onClick={() => {
+                if (category !== item) {
+                  setMeetingsLoading(true);
+                  setMeetingsError('');
+                  setAllMeetings([]);
+                }
                 setCategory(item);
                 setSelectedMeeting(null);
               }}>
@@ -225,7 +249,12 @@ export default function Home({
       <main className="home-content">
         {/* 지도 화면에 출력 */}
         <section className="home-map" aria-label="지도 영역">
-          <Map onLocationSelect={onLocationSelect} />
+          {/* 지도 컴포넌트 */}
+          <Map
+            onLocationSelect={onLocationSelect}
+            onSearchArea={handleSearchArea}
+            searching={meetingsLoading}
+          />
         </section>
 
         {/* 모임 카드 영역 */}
@@ -275,9 +304,7 @@ export default function Home({
               <p className="home-empty">{meetingsError}</p>
             )}
             {!meetingsLoading && !meetingsError && meetings.length === 0 && (
-              <p className="home-empty">
-                아직 등록된 모임이 없어요.
-              </p>
+              <p className="home-empty">아직 등록된 모임이 없어요.</p>
             )}
           </div>
         </section>
