@@ -115,7 +115,9 @@ export default function CreateMeeting({
   const [description, setDescription] = useState('');
   const [images, setImages] = useState([]);
   const [place, setPlace] = useState(selectedLocation?.placeName ?? '');
-  const [placeSelection, setPlaceSelection] = useState(selectedLocation ?? null);
+  const [placeSelection, setPlaceSelection] = useState(
+    selectedLocation ?? null,
+  );
   const [placeResults, setPlaceResults] = useState([]);
   const [placeSearchMessage, setPlaceSearchMessage] = useState('');
   const [placeSearchOpen, setPlaceSearchOpen] = useState(false);
