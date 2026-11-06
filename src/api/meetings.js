@@ -39,11 +39,13 @@ export async function getMeetings(token, { bounds, category, signal } = {}) {
     }
   }
   if (category && category !== '전체') params.set('category', category);
+
   const query = params.toString();
+  const path = bounds ? '/api/meetings/nearby' : '/api/meetings';
 
   // 현재 위치에서 검색 버튼 클릭 시 백엔드에 데이터 전달하는 코드
   const response = await fetch(
-    `${API_BASE_URL}/api/meetings${query ? `?${query}` : ''}`,
+    `${API_BASE_URL}${path}${query ? `?${query}` : ''}`,
     {
       signal,
       headers: {
