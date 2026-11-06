@@ -103,7 +103,7 @@ export default function HomePage({
     // 진행 중인 API 요청을 취소할 때 사용하는 객체
     const controller = new AbortController();
 
-    // 백엔드에 모임 목록 요청
+    // 백엔드에 모임 목록 요청 후 상태 저장
     getMeetings(token, {
       bounds: searchBounds, // 서버에 보낼 지도 범위
       category, // 카테고리
@@ -290,6 +290,7 @@ export default function HomePage({
           </div>
           {/* 모임 카드 필터링 영역 */}
           <div className="home-meeting-list">
+            {/* 저장한 데이터 모임카드에 전달 */}
             {displayedMeetings.map((meeting) => (
               <MeetingCard
                 key={meeting.id}

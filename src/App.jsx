@@ -29,11 +29,31 @@ export default function App() {
   }
 
   if (screen === 'create' && loginInfo) {
-    return <><CreateMeetingPage onBack={() => setScreen('home')} userName={loginInfo.name} token={loginInfo.token} selectedLocation={selectedLocation} /><BottomNavigation activeTab="home" /></>;
+    return (
+      <>
+        <CreateMeetingPage
+          onBack={() => setScreen('home')}
+          userName={loginInfo.name}
+          token={loginInfo.token}
+          selectedLocation={selectedLocation}
+        />
+        <BottomNavigation activeTab="home" />
+      </>
+    );
   }
 
   if (screen === 'home' && loginInfo) {
-    return <><HomePage userName={loginInfo.name} token={loginInfo.token} onCreateTap={() => setScreen('create')} onLocationSelect={setSelectedLocation} /><BottomNavigation activeTab="home" /></>;
+    return (
+      <>
+        <HomePage
+          userName={loginInfo.name}
+          token={loginInfo.token}
+          onCreateTap={() => setScreen('create')}
+          onLocationSelect={setSelectedLocation}
+        />
+        <BottomNavigation activeTab="home" />
+      </>
+    );
   }
 
   return (
