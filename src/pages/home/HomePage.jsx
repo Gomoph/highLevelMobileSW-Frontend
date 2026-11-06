@@ -83,6 +83,7 @@ export default function HomePage({
   token,
   onCreateTap,
   onLocationSelect,
+  onMeetingSelect,
 }) {
   const [category, setCategory] = useState('전체');
   const [searchBounds, setSearchBounds] = useState(null);
@@ -296,7 +297,7 @@ export default function HomePage({
                 key={meeting.id}
                 meeting={meeting}
                 selected={selectedMeeting?.id === meeting.id}
-                onSelect={() => setSelectedMeeting(meeting)}
+                onSelect={() => onMeetingSelect(meeting)}
               />
             ))}
             {meetingsLoading && (

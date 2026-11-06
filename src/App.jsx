@@ -8,12 +8,14 @@ import SignupPage from './pages/auth/SignupPage.jsx';
 import BottomNavigation from './components/layout/BottomNavigation.jsx';
 import HomePage from './pages/home/HomePage.jsx';
 import CreateMeetingPage from './pages/meetings/CreateMeetingPage.jsx';
+import MeetingDetail from './pages/meetings/MeetingDetail.jsx';
 
 export default function App() {
   const [screen, setScreen] = useState('login');
   // 로그인 정보는 메모리에 보관하며 새로고침하면 초기화됩니다.
   const [loginInfo, setLoginInfo] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
 
   // 로그인 페이지로 돌아가는 함수
   if (screen === 'findId') {
@@ -42,6 +44,18 @@ export default function App() {
     );
   }
 
+  if (screen === 'detail' && loginInfo) {
+    return (
+      <>
+        <MeetingDetail
+          meeting={selectedMeeting}
+          onBack={() => setScreen('home')}
+        />
+        <BottomNavigation activeTab="home" />
+      </>
+    );
+  }
+
   if (screen === 'home' && loginInfo) {
     return (
       <>
@@ -50,6 +64,10 @@ export default function App() {
           token={loginInfo.token}
           onCreateTap={() => setScreen('create')}
           onLocationSelect={setSelectedLocation}
+          onMeetingSelect={(meeting) => {
+            setSelectedMeeting(meeting);
+            setScreen('detail');
+          }}
         />
         <BottomNavigation activeTab="home" />
       </>
