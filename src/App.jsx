@@ -51,7 +51,6 @@ export default function App() {
           meeting={selectedMeeting}
           onBack={() => setScreen('home')}
         />
-        <BottomNavigation activeTab="home" />
       </>
     );
   }
