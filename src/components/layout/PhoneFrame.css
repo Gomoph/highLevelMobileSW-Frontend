@@ -1,0 +1,125 @@
+.phone-preview {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  box-sizing: border-box;
+  background: #e9eaed;
+}
+
+.phone-frame {
+  position: relative;
+  width: 375px;
+  height: 812px;
+  box-sizing: content-box;
+  border: 12px solid #171717;
+  border-radius: 54px;
+  background: #171717;
+  box-shadow: 0 0 0 2px #626367, 0 24px 60px #0003;
+}
+
+.phone-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 42px;
+  background: white;
+  /* fixed 하단 메뉴도 브라우저 대신 이 화면을 기준으로 배치합니다. */
+  transform: translateZ(0);
+}
+
+.phone-app-content {
+  position: absolute;
+  inset: 44px 0 24px;
+  overflow: hidden;
+}
+
+.phone-notch {
+  position: absolute;
+  z-index: 2000;
+  top: 0;
+  left: 50%;
+  width: 160px;
+  height: 30px;
+  transform: translateX(-50%);
+  border-radius: 0 0 20px 20px;
+  background: #171717;
+  pointer-events: none;
+}
+
+.phone-speaker {
+  position: absolute;
+  top: 10px;
+  left: 53px;
+  width: 44px;
+  height: 5px;
+  border-radius: 5px;
+  background: #343438;
+}
+
+.phone-camera {
+  position: absolute;
+  top: 8px;
+  right: 38px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid #24262b;
+  border-radius: 50%;
+  background: #111b30;
+}
+
+.phone-home-indicator {
+  position: absolute;
+  z-index: 2000;
+  bottom: 8px;
+  left: 50%;
+  width: 134px;
+  height: 5px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #171717;
+  pointer-events: none;
+}
+
+.phone-app-content .home-page,
+.phone-app-content .create-page {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 인증 화면에 있던 개별 휴대폰 테두리는 공통 프레임으로 대체합니다. */
+.phone-app-content .login-page {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  display: block;
+  overflow-y: auto;
+  background: white;
+}
+
+.phone-app-content .login-phone {
+  width: 100%;
+  min-height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.phone-app-content .login-phone::before,
+.phone-app-content .login-home-indicator {
+  display: none;
+}
+
+.phone-app-content .signup-phone {
+  height: 100%;
+}
+
+.phone-screen .app-footer.glass-dock {
+  bottom: 30px;
+}
+
+.phone-screen .footer-toast {
+  bottom: 120px;
+}
