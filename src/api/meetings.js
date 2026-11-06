@@ -41,6 +41,8 @@ export async function getMeetings(token, { bounds, category, signal } = {}) {
   if (category && category !== '전체') params.set('category', category);
 
   const query = params.toString();
+
+  // bounds가 있으면 주변 목록 API, 없으면 전체 목록 API를 호출하도록 나누기
   const path = bounds ? '/api/meetings/nearby' : '/api/meetings';
 
   // 현재 위치에서 검색 버튼 클릭 시 백엔드에 데이터 전달하는 코드
