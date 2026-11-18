@@ -62,3 +62,16 @@ export async function getMeetings(token, { bounds, category, signal } = {}) {
 
   return response.json();
 }
+
+// 내가 만든 모임 목록
+export async function getMyMeetings(token) {
+  const response = await fetch(`${API_BASE_URL}/api/meetings/mine`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`내 모임을 불러오지 못했습니다. (${response.status})`);
+  }
+
+  return response.json();
+}

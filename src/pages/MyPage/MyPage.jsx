@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getMyProfile, updateMyProfile } from '../../api/members.js';
+import { getMyMeetings } from '../../api/meetings.js';
 import './MyPage.css';
 
 function MyPageIcon({ name, className = '' }) {
@@ -62,10 +63,11 @@ export default function MyPage({
   introduction = '',
   interests = [],
   joinedMeetings = [],
-  hostedMeetings = [],
+  hostedMeetings: hostedFromProps = [],
   savedCount = 0,
   onOpenSaved,
   onLogout,
+  onNameChange,
 }) {
   const displayName = user?.name ?? userName ?? '사용자';
   const [pageTab, setPageTab] = useState('profile');
@@ -81,6 +83,7 @@ export default function MyPage({
     introduction: user?.introduction ?? introduction,
   });
   const [draftProfile, setDraftProfile] = useState(profile);
+  const [hostedMeetings, setHostedMeetings] = useState(hostedFromProps);
   const displayId = profile.userId ?? user?.userId ?? userId;
 
   const meetings = activity === 'joined' ? joinedMeetings : hostedMeetings;
@@ -121,6 +124,22 @@ export default function MyPage({
     };
   }, [token]);
 
+  // 내가 만든 모임 불러오기
+  useEffect(() => {
+    if (!token) return undefined;
+
+    let isCurrent = true;
+    getMyMeetings(token)
+      .then((data) => {
+        if (isCurrent) setHostedMeetings(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {});
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [token]);
+
   const openEditor = () => {
     setDraftProfile(profile);
     setEditing(true);
@@ -139,6 +158,7 @@ export default function MyPage({
         addressDetail: savedProfile.addressDetail ?? '',
         introduction: savedProfile.introduction ?? '',
       });
+      onNameChange?.(savedProfile.name);
       setEditing(false);
       showNotice('프로필이 저장되었어요.');
     } catch (error) {

@@ -122,6 +122,7 @@ export default function App() {
           token={loginInfo.token}
           savedCount={favoriteMeetings.length}
           onOpenSaved={() => setScreen('fav')}
+          onNameChange={(name) => setLoginInfo((current) => ({ ...current, name }))}
           onLogout={() => {
             setLoginInfo(null);
             setFavoriteMeetings([]);
