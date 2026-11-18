@@ -20,7 +20,7 @@ function FooterIcon({ name }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2h-4v-9H9v9H5a2 2 0 0 1-2-2z"/></svg>;
 }
 
-export default function BottomNavigation({ activeTab = 'home' }) {
+export default function BottomNavigation({ activeTab = 'home', onNavigate }) {
   const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
@@ -41,7 +41,10 @@ export default function BottomNavigation({ activeTab = 'home' }) {
               type="button"
               className={`glass-dock-item${isActive ? ' glass-dock-item-active' : ''}`}
               aria-current={isActive ? 'page' : undefined}
-              onClick={() => setToastMessage(item.message)}
+              onClick={() => {
+                const wasHandled = onNavigate?.(item.id);
+                if (!wasHandled) setToastMessage(item.message);
+              }}
             >
               <FooterIcon name={item.id} />
               <span className={isActive ? 'glass-dock-label-active' : 'glass-dock-label'}>{item.label}</span>

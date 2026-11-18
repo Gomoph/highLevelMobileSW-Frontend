@@ -9,6 +9,7 @@ import BottomNavigation from './components/layout/BottomNavigation.jsx';
 import HomePage from './pages/home/HomePage.jsx';
 import CreateMeetingPage from './pages/meetings/CreateMeetingPage.jsx';
 import MeetingDetail from './pages/meetings/MeetingDetail.jsx';
+import MyPage from './pages/MyPage/MyPage.jsx';
 
 export default function App() {
   const [screen, setScreen] = useState('login');
@@ -16,6 +17,15 @@ export default function App() {
   const [loginInfo, setLoginInfo] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+
+  const handleBottomNavigation = (tab) => {
+    if (tab === 'home' || tab === 'mypage') {
+      setScreen(tab);
+      return true;
+    }
+
+    return false;
+  };
 
   // 로그인 페이지로 돌아가는 함수
   if (screen === 'findId') {
@@ -39,7 +49,28 @@ export default function App() {
           token={loginInfo.token}
           selectedLocation={selectedLocation}
         />
-        <BottomNavigation activeTab="home" />
+        <BottomNavigation
+          activeTab="home"
+          onNavigate={handleBottomNavigation}
+        />
+      </>
+    );
+  }
+
+  if (screen === 'mypage' && loginInfo) {
+    return (
+      <>
+        <MyPage
+          userName={loginInfo.name}
+          onLogout={() => {
+            setLoginInfo(null);
+            setScreen('login');
+          }}
+        />
+        <BottomNavigation
+          activeTab="mypage"
+          onNavigate={handleBottomNavigation}
+        />
       </>
     );
   }
@@ -68,7 +99,10 @@ export default function App() {
             setScreen('detail');
           }}
         />
-        <BottomNavigation activeTab="home" />
+        <BottomNavigation
+          activeTab="home"
+          onNavigate={handleBottomNavigation}
+        />
       </>
     );
   }
