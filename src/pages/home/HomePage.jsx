@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getMeetings } from '../../api/meetings.js';
 import MeetingMap from '../../components/map/MeetingMap.jsx';
+import FavoritesSheet from '../favorites/FavoritesSheet.jsx';
 import './HomePage.css';
 
 const CATEGORIES = [
@@ -84,6 +85,10 @@ export default function HomePage({
   onCreateTap,
   onLocationSelect,
   onMeetingSelect,
+  favoritesOpen = false,
+  favoriteMeetings = [],
+  onCloseFavorites,
+  onToggleFavorite,
 }) {
   const [category, setCategory] = useState('전체');
   const [searchBounds, setSearchBounds] = useState(null);
@@ -332,6 +337,14 @@ export default function HomePage({
             ×
           </button>
         </div>
+      )}
+      {favoritesOpen && (
+        <FavoritesSheet
+          meetings={favoriteMeetings}
+          onClose={onCloseFavorites}
+          onMeetingSelect={onMeetingSelect}
+          onToggleFavorite={onToggleFavorite}
+        />
       )}
     </div>
   );

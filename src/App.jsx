@@ -17,14 +17,27 @@ export default function App() {
   const [loginInfo, setLoginInfo] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [detailReturnScreen, setDetailReturnScreen] = useState('home');
+  const [favoriteMeetings, setFavoriteMeetings] = useState([]);
 
   const handleBottomNavigation = (tab) => {
-    if (tab === 'home' || tab === 'mypage') {
+    if (tab === 'home' || tab === 'mypage' || tab === 'fav') {
       setScreen(tab);
       return true;
     }
 
     return false;
+  };
+
+  const toggleFavorite = (meeting) => {
+    if (meeting?.id == null) return;
+
+    setFavoriteMeetings((current) => {
+      const alreadySaved = current.some((saved) => saved.id === meeting.id);
+      return alreadySaved
+        ? current.filter((saved) => saved.id !== meeting.id)
+        : [...current, meeting];
+    });
   };
 
   // 로그인 페이지로 돌아가는 함수
@@ -62,8 +75,11 @@ export default function App() {
       <>
         <MyPage
           userName={loginInfo.name}
+          savedCount={favoriteMeetings.length}
+          onOpenSaved={() => setScreen('fav')}
           onLogout={() => {
             setLoginInfo(null);
+            setFavoriteMeetings([]);
             setScreen('login');
           }}
         />
@@ -80,13 +96,15 @@ export default function App() {
       <>
         <MeetingDetail
           meeting={selectedMeeting}
-          onBack={() => setScreen('home')}
+          isFavorite={favoriteMeetings.some((meeting) => meeting.id === selectedMeeting?.id)}
+          onToggleFavorite={() => toggleFavorite(selectedMeeting)}
+          onBack={() => setScreen(detailReturnScreen)}
         />
       </>
     );
   }
 
-  if (screen === 'home' && loginInfo) {
+  if ((screen === 'home' || screen === 'fav') && loginInfo) {
     return (
       <>
         <HomePage
@@ -96,11 +114,16 @@ export default function App() {
           onLocationSelect={setSelectedLocation}
           onMeetingSelect={(meeting) => {
             setSelectedMeeting(meeting);
+            setDetailReturnScreen(screen);
             setScreen('detail');
           }}
+          favoritesOpen={screen === 'fav'}
+          favoriteMeetings={favoriteMeetings}
+          onCloseFavorites={() => setScreen('home')}
+          onToggleFavorite={toggleFavorite}
         />
         <BottomNavigation
-          activeTab="home"
+          activeTab={screen === 'fav' ? 'fav' : 'home'}
           onNavigate={handleBottomNavigation}
         />
       </>

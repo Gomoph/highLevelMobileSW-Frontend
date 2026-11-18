@@ -14,8 +14,12 @@ function DetailIcon({ name }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
 
-export default function MeetingDetail({ meeting, onBack }) {
-  const [isFavorite, setIsFavorite] = useState(false);
+export default function MeetingDetail({
+  meeting,
+  onBack,
+  isFavorite = false,
+  onToggleFavorite,
+}) {
   const [notice, setNotice] = useState('');
   const startsAt = meeting?.startsAt ?? meeting?.date;
   const distance = Number(meeting?.distance);
@@ -35,8 +39,8 @@ export default function MeetingDetail({ meeting, onBack }) {
             aria-label="모임 찜하기"
             aria-pressed={isFavorite}
             onClick={() => {
-              setIsFavorite((value) => !value);
-              setNotice('찜은 이 화면에서만 임시로 적용돼요.');
+              onToggleFavorite?.();
+              setNotice(isFavorite ? '찜 목록에서 삭제했어요.' : '찜 목록에 저장했어요.');
             }}>
             <DetailIcon name="heart" />
           </button>
