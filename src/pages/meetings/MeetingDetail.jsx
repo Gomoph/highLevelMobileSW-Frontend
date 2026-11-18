@@ -38,9 +38,13 @@ export default function MeetingDetail({
             className={`meeting-detail-favorite${isFavorite ? ' is-active' : ''}`}
             aria-label="모임 찜하기"
             aria-pressed={isFavorite}
-            onClick={() => {
-              onToggleFavorite?.();
-              setNotice(isFavorite ? '찜 목록에서 삭제했어요.' : '찜 목록에 저장했어요.');
+            onClick={async () => {
+              try {
+                await onToggleFavorite?.();
+                setNotice(isFavorite ? '찜 목록에서 삭제했어요.' : '찜 목록에 저장했어요.');
+              } catch {
+                setNotice('찜 상태를 저장하지 못했어요. 다시 시도해 주세요.');
+              }
             }}>
             <DetailIcon name="heart" />
           </button>

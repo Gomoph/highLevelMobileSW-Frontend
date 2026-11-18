@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { getMyProfile, updateMyProfile } from '../../api/members.js';
 import './MyPage.css';
 
 function MyPageIcon({ name, className = '' }) {
@@ -55,6 +56,7 @@ function MeetingCard({ meeting, status, onClick }) {
 export default function MyPage({
   user,
   userName,
+  token,
   userId = '',
   address = '',
   introduction = '',
@@ -66,18 +68,20 @@ export default function MyPage({
   onLogout,
 }) {
   const displayName = user?.name ?? userName ?? '사용자';
-  const displayId = user?.userId ?? userId;
   const [pageTab, setPageTab] = useState('profile');
   const [activity, setActivity] = useState('joined');
   const [notice, setNotice] = useState('');
   const [editing, setEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [profile, setProfile] = useState({
     name: displayName,
     address: user?.address ?? address,
+    addressDetail: user?.addressDetail ?? '',
     introduction: user?.introduction ?? introduction,
   });
   const [draftProfile, setDraftProfile] = useState(profile);
+  const displayId = profile.userId ?? user?.userId ?? userId;
 
   const meetings = activity === 'joined' ? joinedMeetings : hostedMeetings;
   const profileLink = useMemo(
@@ -91,16 +95,57 @@ export default function MyPage({
     showNotice.timer = window.setTimeout(() => setNotice(''), 2200);
   };
 
+  useEffect(() => {
+    if (!token) return undefined;
+
+    let isCurrent = true;
+    getMyProfile(token)
+      .then((data) => {
+        if (!isCurrent) return;
+        setProfile({
+          ...data,
+          address: data.address ?? '',
+          addressDetail: data.addressDetail ?? '',
+          introduction: data.introduction ?? '',
+        });
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setNotice('회원 정보를 불러오지 못했어요.');
+          window.setTimeout(() => setNotice(''), 2200);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [token]);
+
   const openEditor = () => {
     setDraftProfile(profile);
     setEditing(true);
   };
 
-  const saveProfile = (event) => {
+  const saveProfile = async (event) => {
     event.preventDefault();
-    setProfile(draftProfile);
-    setEditing(false);
-    showNotice('프로필이 이 화면에 저장되었어요.');
+    if (!token || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const savedProfile = await updateMyProfile(token, draftProfile);
+      setProfile({
+        ...savedProfile,
+        address: savedProfile.address ?? '',
+        addressDetail: savedProfile.addressDetail ?? '',
+        introduction: savedProfile.introduction ?? '',
+      });
+      setEditing(false);
+      showNotice('프로필이 저장되었어요.');
+    } catch (error) {
+      showNotice(error instanceof Error ? error.message : '프로필을 저장하지 못했어요.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const shareProfile = async (method) => {
@@ -155,8 +200,8 @@ export default function MyPage({
                     <span className="mypage-member-badge">일반 회원</span>
                   </div>
                   {displayId && <p className="mypage-user-id">@{displayId}</p>}
-                  {profile.address && (
-                    <p className="mypage-address"><MyPageIcon name="pin" />{profile.address}</p>
+                  {(profile.address || profile.addressDetail) && (
+                    <p className="mypage-address"><MyPageIcon name="pin" />{[profile.address, profile.addressDetail].filter(Boolean).join(' ')}</p>
                   )}
                 </div>
               </div>
@@ -252,10 +297,10 @@ export default function MyPage({
               <button type="button" className="mypage-close-button" aria-label="닫기" onClick={() => setEditing(false)}><MyPageIcon name="close" /></button>
             </div>
             <label>이름<input value={draftProfile.name} onChange={(event) => setDraftProfile({ ...draftProfile, name: event.target.value })} maxLength={30} /></label>
-            <label>활동 지역<input value={draftProfile.address} onChange={(event) => setDraftProfile({ ...draftProfile, address: event.target.value })} maxLength={80} placeholder="예: 서울시 중랑구" /></label>
+            <label>주소<input value={draftProfile.address} onChange={(event) => setDraftProfile({ ...draftProfile, address: event.target.value })} maxLength={120} placeholder="예: 서울시 중랑구 면목동" /></label>
+            <label>상세 주소<input value={draftProfile.addressDetail} onChange={(event) => setDraftProfile({ ...draftProfile, addressDetail: event.target.value })} maxLength={120} placeholder="동·호수 등 상세 주소" /></label>
             <label>한 줄 소개<textarea value={draftProfile.introduction} onChange={(event) => setDraftProfile({ ...draftProfile, introduction: event.target.value })} maxLength={100} rows={3} placeholder="나를 소개해보세요." /></label>
-            <button className="mypage-primary-button" type="submit">저장하기</button>
-            <p className="mypage-local-save-note">현재 입력한 정보는 이 화면에서만 유지돼요.</p>
+            <button className="mypage-primary-button" type="submit" disabled={isSaving}>{isSaving ? '저장 중…' : '저장하기'}</button>
           </form>
         </div>
       )}

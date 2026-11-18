@@ -70,6 +70,7 @@ function FavoriteMeetingCard({ meeting, onSelect, onRemove }) {
 
 export default function FavoritesSheet({
   meetings = [],
+  errorMessage = '',
   onClose,
   onMeetingSelect,
   onToggleFavorite,
@@ -78,6 +79,16 @@ export default function FavoritesSheet({
   const [sort, setSort] = useState('최신순');
   const [sortOpen, setSortOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [actionError, setActionError] = useState('');
+
+  const removeFavorite = async (meeting) => {
+    setActionError('');
+    try {
+      await onToggleFavorite?.(meeting);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : '찜을 해제하지 못했어요.');
+    }
+  };
 
   const visibleMeetings = useMemo(() => {
     const filtered = meetings.filter((meeting) =>
@@ -93,7 +104,8 @@ export default function FavoritesSheet({
       });
     }
 
-    return [...filtered].sort((left, right) => (Number(right.id) || 0) - (Number(left.id) || 0));
+    // API가 저장 시각 내림차순으로 목록을 반환하므로 기본 정렬은 응답 순서를 유지합니다.
+    return filtered;
   }, [category, meetings, sort]);
 
   return (
@@ -149,20 +161,24 @@ export default function FavoritesSheet({
         )}
       </header>
 
+      {(errorMessage || actionError) && (
+        <p className="favorites-error" role="status">{actionError || errorMessage}</p>
+      )}
+
       <div className="favorites-sheet-list">
         {visibleMeetings.map((meeting) => (
           <FavoriteMeetingCard
             key={meeting.id}
             meeting={meeting}
             onSelect={() => onMeetingSelect?.(meeting)}
-            onRemove={() => onToggleFavorite?.(meeting)}
+            onRemove={() => void removeFavorite(meeting)}
           />
         ))}
         {visibleMeetings.length === 0 && (
           <div className="favorites-empty-state">
             <span className="favorites-empty-heart"><HeartIcon /></span>
-            <strong>{meetings.length === 0 ? '아직 찜한 모임이 없어요' : '이 카테고리의 찜한 모임이 없어요'}</strong>
-            <p>마음에 드는 모임의 하트를 눌러 저장해보세요.</p>
+            <strong>{errorMessage ? '찜 목록을 불러오지 못했어요' : meetings.length === 0 ? '아직 찜한 모임이 없어요' : '이 카테고리의 찜한 모임이 없어요'}</strong>
+            {!errorMessage && <p>마음에 드는 모임의 하트를 눌러 저장해보세요.</p>}
             {category !== '전체' && <button type="button" onClick={() => setCategory('전체')}>전체 모임 보기</button>}
           </div>
         )}

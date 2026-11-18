@@ -1,6 +1,11 @@
 // src/App.jsx — 로그인 상태와 화면 전환 및 선택 장소를 관리하는 앱 컴포넌트
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
+import {
+  addFavoriteMeeting,
+  getFavoriteMeetings,
+  removeFavoriteMeeting,
+} from './api/favorites.js';
 import LoginPage from './pages/auth/LoginPage.jsx';
 import FindIdPage from './pages/auth/FindIdPage.jsx';
 import FindPasswordPage from './pages/auth/FindPasswordPage.jsx';
@@ -19,6 +24,33 @@ export default function App() {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [detailReturnScreen, setDetailReturnScreen] = useState('home');
   const [favoriteMeetings, setFavoriteMeetings] = useState([]);
+  const [favoritesError, setFavoritesError] = useState('');
+
+  useEffect(() => {
+    const token = loginInfo?.token;
+    if (!token) {
+      setFavoriteMeetings([]);
+      return undefined;
+    }
+
+    let isCurrent = true;
+    getFavoriteMeetings(token)
+      .then((meetings) => {
+        if (isCurrent) {
+          setFavoriteMeetings(Array.isArray(meetings) ? meetings : []);
+          setFavoritesError('');
+        }
+      })
+      .catch((error) => {
+        if (isCurrent) {
+          setFavoritesError(error instanceof Error ? error.message : '찜 목록을 불러오지 못했어요.');
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [loginInfo?.token]);
 
   const handleBottomNavigation = (tab) => {
     if (tab === 'home' || tab === 'mypage' || tab === 'fav') {
@@ -29,15 +61,27 @@ export default function App() {
     return false;
   };
 
-  const toggleFavorite = (meeting) => {
-    if (meeting?.id == null) return;
+  const toggleFavorite = async (meeting) => {
+    const token = loginInfo?.token;
+    if (!token || meeting?.id == null) throw new Error('로그인 정보 또는 모임 정보가 없습니다.');
 
-    setFavoriteMeetings((current) => {
-      const alreadySaved = current.some((saved) => saved.id === meeting.id);
-      return alreadySaved
-        ? current.filter((saved) => saved.id !== meeting.id)
-        : [...current, meeting];
-    });
+    const alreadySaved = favoriteMeetings.some((saved) => saved.id === meeting.id);
+    setFavoritesError('');
+    try {
+      if (alreadySaved) {
+        await removeFavoriteMeeting(token, meeting.id);
+        setFavoriteMeetings((current) => current.filter((saved) => saved.id !== meeting.id));
+      } else {
+        await addFavoriteMeeting(token, meeting.id);
+        setFavoriteMeetings((current) => current.some((saved) => saved.id === meeting.id)
+          ? current
+          : [meeting, ...current]);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '찜 상태를 저장하지 못했어요.';
+      setFavoritesError(message);
+      throw error;
+    }
   };
 
   // 로그인 페이지로 돌아가는 함수
@@ -75,11 +119,13 @@ export default function App() {
       <>
         <MyPage
           userName={loginInfo.name}
+          token={loginInfo.token}
           savedCount={favoriteMeetings.length}
           onOpenSaved={() => setScreen('fav')}
           onLogout={() => {
             setLoginInfo(null);
             setFavoriteMeetings([]);
+            setFavoritesError('');
             setScreen('login');
           }}
         />
@@ -119,6 +165,7 @@ export default function App() {
           }}
           favoritesOpen={screen === 'fav'}
           favoriteMeetings={favoriteMeetings}
+          favoritesError={favoritesError}
           onCloseFavorites={() => setScreen('home')}
           onToggleFavorite={toggleFavorite}
         />

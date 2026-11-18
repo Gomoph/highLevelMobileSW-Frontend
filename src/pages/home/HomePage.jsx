@@ -87,6 +87,7 @@ export default function HomePage({
   onMeetingSelect,
   favoritesOpen = false,
   favoriteMeetings = [],
+  favoritesError = '',
   onCloseFavorites,
   onToggleFavorite,
 }) {
@@ -341,6 +342,7 @@ export default function HomePage({
       {favoritesOpen && (
         <FavoritesSheet
           meetings={favoriteMeetings}
+          errorMessage={favoritesError}
           onClose={onCloseFavorites}
           onMeetingSelect={onMeetingSelect}
           onToggleFavorite={onToggleFavorite}
