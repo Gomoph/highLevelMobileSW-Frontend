@@ -133,7 +133,11 @@ export default function MyPage({
       .then((data) => {
         if (isCurrent) setHostedMeetings(Array.isArray(data) ? data : []);
       })
-      .catch(() => {});
+      .catch((error) => {
+        if (isCurrent) {
+          showNotice(error instanceof Error ? error.message : '내가 만든 모임을 불러오지 못했어요.');
+        }
+      });
 
     return () => {
       isCurrent = false;
