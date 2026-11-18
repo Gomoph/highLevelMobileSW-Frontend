@@ -28,10 +28,7 @@ export default function App() {
 
   useEffect(() => {
     const token = loginInfo?.token;
-    if (!token) {
-      setFavoriteMeetings([]);
-      return undefined;
-    }
+    if (!token) return undefined;
 
     let isCurrent = true;
     getFavoriteMeetings(token)
