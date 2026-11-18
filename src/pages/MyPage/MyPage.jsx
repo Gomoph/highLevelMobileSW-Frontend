@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getMyProfile, updateMyProfile } from '../../api/members.js';
 import { getMyMeetings } from '../../api/meetings.js';
 import './MyPage.css';
@@ -73,6 +73,7 @@ export default function MyPage({
   const [pageTab, setPageTab] = useState('profile');
   const [activity, setActivity] = useState('joined');
   const [notice, setNotice] = useState('');
+  const noticeTimerRef = useRef(null);
   const [editing, setEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -92,11 +93,13 @@ export default function MyPage({
     [displayId],
   );
 
-  const showNotice = (message) => {
+  const showNotice = useCallback((message) => {
     setNotice(message);
-    window.clearTimeout(showNotice.timer);
-    showNotice.timer = window.setTimeout(() => setNotice(''), 2200);
-  };
+    window.clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = window.setTimeout(() => setNotice(''), 2200);
+  }, []);
+
+  useEffect(() => () => window.clearTimeout(noticeTimerRef.current), []);
 
   useEffect(() => {
     if (!token) return undefined;
@@ -113,16 +116,13 @@ export default function MyPage({
         });
       })
       .catch(() => {
-        if (isCurrent) {
-          setNotice('회원 정보를 불러오지 못했어요.');
-          window.setTimeout(() => setNotice(''), 2200);
-        }
+        if (isCurrent) showNotice('회원 정보를 불러오지 못했어요.');
       });
 
     return () => {
       isCurrent = false;
     };
-  }, [token]);
+  }, [token, showNotice]);
 
   // 내가 만든 모임 불러오기
   useEffect(() => {
@@ -142,7 +142,7 @@ export default function MyPage({
     return () => {
       isCurrent = false;
     };
-  }, [token]);
+  }, [token, showNotice]);
 
   const openEditor = () => {
     setDraftProfile(profile);
