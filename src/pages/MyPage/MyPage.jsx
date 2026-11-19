@@ -5,13 +5,43 @@ import './MyPage.css';
 
 function MyPageIcon({ name, className = '' }) {
   const paths = {
-    user: <><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" /></>,
-    pin: <><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
-    people: <><circle cx="9" cy="8" r="3" /><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M16 5a3 3 0 0 1 0 6M18 14a4 4 0 0 1 4 4v3" /></>,
-    image: <><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></>,
+    user: (
+      <>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
+      </>
+    ),
+    pin: (
+      <>
+        <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+        <circle cx="12" cy="10" r="2.5" />
+      </>
+    ),
+    people: (
+      <>
+        <circle cx="9" cy="8" r="3" />
+        <path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M16 5a3 3 0 0 1 0 6M18 14a4 4 0 0 1 4 4v3" />
+      </>
+    ),
+    image: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="m21 15-5-5L5 21" />
+      </>
+    ),
     arrow: <path d="m9 18 6-6-6-6" />,
-    close: <><path d="m18 6-12 12M6 6l12 12" /></>,
-    calendar: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
+    close: (
+      <>
+        <path d="m18 6-12 12M6 6l12 12" />
+      </>
+    ),
+    calendar: (
+      <>
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path d="M16 2v4M8 2v4M3 10h18" />
+      </>
+    ),
   };
 
   return (
@@ -41,11 +71,19 @@ function MeetingCard({ meeting, status, onClick }) {
           <MyPageIcon name="image" />
         </span>
         <span className="mypage-meeting-info">
-          <span className="mypage-meeting-category">{meeting.category ?? meeting.cat ?? '모임'}</span>
+          <span className="mypage-meeting-category">
+            {meeting.category ?? meeting.cat ?? '모임'}
+          </span>
           <strong>{meeting.title ?? '제목 없는 모임'}</strong>
-          <span className="mypage-meeting-detail"><MyPageIcon name="pin" />{place}</span>
-          <span className="mypage-meeting-detail"><MyPageIcon name="people" />
-            {currentMembers != null ? `${currentMembers} / ${maxMembers ?? '-'}명` : `최대 ${maxMembers ?? '-'}명`}
+          <span className="mypage-meeting-detail">
+            <MyPageIcon name="pin" />
+            {place}
+          </span>
+          <span className="mypage-meeting-detail">
+            <MyPageIcon name="people" />
+            {currentMembers != null
+              ? `${currentMembers} / ${maxMembers ?? '-'}명`
+              : `최대 ${maxMembers ?? '-'}명`}
           </span>
         </span>
         <MyPageIcon name="arrow" className="mypage-chevron" />
@@ -102,7 +140,7 @@ export default function MyPage({
   useEffect(() => () => window.clearTimeout(noticeTimerRef.current), []);
 
   useEffect(() => {
-    if (!token) return undefined;
+    if (!token) return undefined; // 로그인 토근 없으면 undefined 반환
 
     let isCurrent = true;
     getMyProfile(token)
@@ -119,6 +157,7 @@ export default function MyPage({
         if (isCurrent) showNotice('회원 정보를 불러오지 못했어요.');
       });
 
+    // 토큰 없을 때 API 요청 건너뛰는 검사
     return () => {
       isCurrent = false;
     };
@@ -135,7 +174,11 @@ export default function MyPage({
       })
       .catch((error) => {
         if (isCurrent) {
-          showNotice(error instanceof Error ? error.message : '내가 만든 모임을 불러오지 못했어요.');
+          showNotice(
+            error instanceof Error
+              ? error.message
+              : '내가 만든 모임을 불러오지 못했어요.',
+          );
         }
       });
 
@@ -166,7 +209,9 @@ export default function MyPage({
       setEditing(false);
       showNotice('프로필이 저장되었어요.');
     } catch (error) {
-      showNotice(error instanceof Error ? error.message : '프로필을 저장하지 못했어요.');
+      showNotice(
+        error instanceof Error ? error.message : '프로필을 저장하지 못했어요.',
+      );
     } finally {
       setIsSaving(false);
     }
@@ -201,8 +246,7 @@ export default function MyPage({
               type="button"
               className={pageTab === tab.id ? 'is-active' : ''}
               aria-current={pageTab === tab.id ? 'page' : undefined}
-              onClick={() => setPageTab(tab.id)}
-            >
+              onClick={() => setPageTab(tab.id)}>
               {tab.label}
             </button>
           ))}
@@ -225,14 +269,22 @@ export default function MyPage({
                   </div>
                   {displayId && <p className="mypage-user-id">@{displayId}</p>}
                   {(profile.address || profile.addressDetail) && (
-                    <p className="mypage-address"><MyPageIcon name="pin" />{[profile.address, profile.addressDetail].filter(Boolean).join(' ')}</p>
+                    <p className="mypage-address">
+                      <MyPageIcon name="pin" />
+                      {[profile.address, profile.addressDetail]
+                        .filter(Boolean)
+                        .join(' ')}
+                    </p>
                   )}
                 </div>
               </div>
 
               <section className="mypage-bio" aria-label="한 줄 소개">
                 <h3>한 줄 소개</h3>
-                <p>{profile.introduction || '나를 소개하는 한 줄을 등록해보세요.'}</p>
+                <p>
+                  {profile.introduction ||
+                    '나를 소개하는 한 줄을 등록해보세요.'}
+                </p>
               </section>
 
               <section className="mypage-interests" aria-label="관심 분야">
@@ -240,51 +292,117 @@ export default function MyPage({
                 <p>선호하는 활동을 기준으로 모임을 찾아보세요.</p>
                 {interests.length > 0 ? (
                   <div className="mypage-interest-list">
-                    {interests.map((interest) => <span key={interest}>{interest}</span>)}
+                    {interests.map((interest) => (
+                      <span key={interest}>{interest}</span>
+                    ))}
                   </div>
                 ) : (
-                  <span className="mypage-interest-empty">관심 분야가 아직 등록되지 않았어요.</span>
+                  <span className="mypage-interest-empty">
+                    관심 분야가 아직 등록되지 않았어요.
+                  </span>
                 )}
               </section>
 
               <div className="mypage-profile-actions">
-                <button type="button" onClick={openEditor}>프로필 관리</button>
-                <button type="button" onClick={() => setSharing(true)}>프로필 공유</button>
+                <button type="button" onClick={openEditor}>
+                  프로필 관리
+                </button>
+                <button type="button" onClick={() => setSharing(true)}>
+                  프로필 공유
+                </button>
               </div>
 
               <div className="mypage-stats" aria-label="모임 활동">
-                <button type="button" onClick={() => { setActivity('joined'); setPageTab('meetings'); }}>
-                  <strong>{joinedMeetings.length}</strong><span>참여한 모임</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivity('joined');
+                    setPageTab('meetings');
+                  }}>
+                  <strong>{joinedMeetings.length}</strong>
+                  <span>참여한 모임</span>
                 </button>
-                <button type="button" onClick={() => { setActivity('hosted'); setPageTab('meetings'); }}>
-                  <strong>{hostedMeetings.length}</strong><span>만든 모임</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivity('hosted');
+                    setPageTab('meetings');
+                  }}>
+                  <strong>{hostedMeetings.length}</strong>
+                  <span>만든 모임</span>
                 </button>
-                <button type="button" onClick={onOpenSaved ?? (() => showNotice('찜한 모임 화면은 준비 중이에요.'))}>
-                  <strong>{savedCount}</strong><span>찜한 모임</span>
+                <button
+                  type="button"
+                  onClick={
+                    onOpenSaved ??
+                    (() => showNotice('찜한 모임 화면은 준비 중이에요.'))
+                  }>
+                  <strong>{savedCount}</strong>
+                  <span>찜한 모임</span>
                 </button>
               </div>
             </section>
 
             <section className="mypage-panel mypage-utility-links">
-              <button type="button" onClick={() => showNotice('고객센터는 준비 중이에요.')}>고객센터 <MyPageIcon name="arrow" /></button>
-              <button type="button" onClick={() => showNotice('약관 및 정책은 준비 중이에요.')}>약관 및 정책 <MyPageIcon name="arrow" /></button>
-              <button type="button" className="mypage-logout" onClick={onLogout}>로그아웃</button>
+              <button
+                type="button"
+                onClick={() => showNotice('고객센터는 준비 중이에요.')}>
+                고객센터 <MyPageIcon name="arrow" />
+              </button>
+              <button
+                type="button"
+                onClick={() => showNotice('약관 및 정책은 준비 중이에요.')}>
+                약관 및 정책 <MyPageIcon name="arrow" />
+              </button>
+              <button
+                type="button"
+                className="mypage-logout"
+                onClick={onLogout}>
+                로그아웃
+              </button>
             </section>
           </>
         ) : (
           <>
             <section className="mypage-panel mypage-meeting-summary">
-              <div><strong>{joinedMeetings.length}</strong><span>참여한 모임</span></div>
-              <div><strong>{hostedMeetings.length}</strong><span>내가 만든 모임</span></div>
+              <div>
+                <strong>{joinedMeetings.length}</strong>
+                <span>참여한 모임</span>
+              </div>
+              <div>
+                <strong>{hostedMeetings.length}</strong>
+                <span>내가 만든 모임</span>
+              </div>
             </section>
-            <div className="mypage-activity-tabs" role="tablist" aria-label="모임 분류">
-              <button type="button" role="tab" aria-selected={activity === 'joined'} className={activity === 'joined' ? 'is-active' : ''} onClick={() => setActivity('joined')}>참여 예정</button>
-              <button type="button" role="tab" aria-selected={activity === 'hosted'} className={activity === 'hosted' ? 'is-active' : ''} onClick={() => setActivity('hosted')}>내가 만든 모임</button>
+            <div
+              className="mypage-activity-tabs"
+              role="tablist"
+              aria-label="모임 분류">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activity === 'joined'}
+                className={activity === 'joined' ? 'is-active' : ''}
+                onClick={() => setActivity('joined')}>
+                참여 예정
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activity === 'hosted'}
+                className={activity === 'hosted' ? 'is-active' : ''}
+                onClick={() => setActivity('hosted')}>
+                내가 만든 모임
+              </button>
             </div>
             <section className="mypage-meetings-section">
               <div className="mypage-section-heading">
                 <div>
-                  <h2>{activity === 'joined' ? '참여 예정 모임' : '내가 만든 모임'}</h2>
+                  <h2>
+                    {activity === 'joined'
+                      ? '참여 예정 모임'
+                      : '내가 만든 모임'}
+                  </h2>
                   <p>{meetings.length}개의 모임</p>
                 </div>
               </div>
@@ -294,15 +412,27 @@ export default function MyPage({
                     <MeetingCard
                       key={meeting.id ?? meeting.title}
                       meeting={meeting}
-                      status={activity === 'joined' ? (meeting.status ?? '참여 확정') : (meeting.status ?? '모집 중')}
-                      onClick={() => showNotice('모임 상세 화면은 준비 중이에요.')}
+                      status={
+                        activity === 'joined'
+                          ? (meeting.status ?? '참여 확정')
+                          : (meeting.status ?? '모집 중')
+                      }
+                      onClick={() =>
+                        showNotice('모임 상세 화면은 준비 중이에요.')
+                      }
                     />
                   ))}
                 </div>
               ) : (
                 <div className="mypage-empty-state">
-                  <span><MyPageIcon name="calendar" /></span>
-                  <strong>{activity === 'joined' ? '참여 중인 모임이 없어요' : '만든 모임이 없어요'}</strong>
+                  <span>
+                    <MyPageIcon name="calendar" />
+                  </span>
+                  <strong>
+                    {activity === 'joined'
+                      ? '참여 중인 모임이 없어요'
+                      : '만든 모임이 없어요'}
+                  </strong>
                   <p>새로운 모임을 찾아 함께해보세요.</p>
                 </div>
               )}
@@ -311,34 +441,130 @@ export default function MyPage({
         )}
       </main>
 
-      {notice && <div className="mypage-toast" role="status">{notice}</div>}
+      {notice && (
+        <div className="mypage-toast" role="status">
+          {notice}
+        </div>
+      )}
 
       {editing && (
-        <div className="mypage-modal-backdrop" onClick={() => setEditing(false)}>
-          <form className="mypage-modal" onSubmit={saveProfile} onClick={(event) => event.stopPropagation()}>
+        <div
+          className="mypage-modal-backdrop"
+          onClick={() => setEditing(false)}>
+          <form
+            className="mypage-modal"
+            onSubmit={saveProfile}
+            onClick={(event) => event.stopPropagation()}>
             <div className="mypage-modal-heading">
-              <div><h2>프로필 관리</h2><p>내 프로필 정보를 수정해요.</p></div>
-              <button type="button" className="mypage-close-button" aria-label="닫기" onClick={() => setEditing(false)}><MyPageIcon name="close" /></button>
+              <div>
+                <h2>프로필 관리</h2>
+                <p>내 프로필 정보를 수정해요.</p>
+              </div>
+              <button
+                type="button"
+                className="mypage-close-button"
+                aria-label="닫기"
+                onClick={() => setEditing(false)}>
+                <MyPageIcon name="close" />
+              </button>
             </div>
-            <label>이름<input value={draftProfile.name} onChange={(event) => setDraftProfile({ ...draftProfile, name: event.target.value })} maxLength={30} /></label>
-            <label>주소<input value={draftProfile.address} onChange={(event) => setDraftProfile({ ...draftProfile, address: event.target.value })} maxLength={120} placeholder="예: 서울시 중랑구 면목동" /></label>
-            <label>상세 주소<input value={draftProfile.addressDetail} onChange={(event) => setDraftProfile({ ...draftProfile, addressDetail: event.target.value })} maxLength={120} placeholder="동·호수 등 상세 주소" /></label>
-            <label>한 줄 소개<textarea value={draftProfile.introduction} onChange={(event) => setDraftProfile({ ...draftProfile, introduction: event.target.value })} maxLength={100} rows={3} placeholder="나를 소개해보세요." /></label>
-            <button className="mypage-primary-button" type="submit" disabled={isSaving}>{isSaving ? '저장 중…' : '저장하기'}</button>
+            <label>
+              이름
+              <input
+                value={draftProfile.name}
+                onChange={(event) =>
+                  setDraftProfile({ ...draftProfile, name: event.target.value })
+                }
+                maxLength={30}
+              />
+            </label>
+            <label>
+              주소
+              <input
+                value={draftProfile.address}
+                onChange={(event) =>
+                  setDraftProfile({
+                    ...draftProfile,
+                    address: event.target.value,
+                  })
+                }
+                maxLength={120}
+                placeholder="예: 서울시 중랑구 면목동"
+              />
+            </label>
+            <label>
+              상세 주소
+              <input
+                value={draftProfile.addressDetail}
+                onChange={(event) =>
+                  setDraftProfile({
+                    ...draftProfile,
+                    addressDetail: event.target.value,
+                  })
+                }
+                maxLength={120}
+                placeholder="동·호수 등 상세 주소"
+              />
+            </label>
+            <label>
+              한 줄 소개
+              <textarea
+                value={draftProfile.introduction}
+                onChange={(event) =>
+                  setDraftProfile({
+                    ...draftProfile,
+                    introduction: event.target.value,
+                  })
+                }
+                maxLength={100}
+                rows={3}
+                placeholder="나를 소개해보세요."
+              />
+            </label>
+            <button
+              className="mypage-primary-button"
+              type="submit"
+              disabled={isSaving}>
+              {isSaving ? '저장 중…' : '저장하기'}
+            </button>
           </form>
         </div>
       )}
 
       {sharing && (
-        <div className="mypage-modal-backdrop mypage-share-backdrop" onClick={() => setSharing(false)}>
-          <section className="mypage-share-sheet" aria-label="프로필 공유" onClick={(event) => event.stopPropagation()}>
+        <div
+          className="mypage-modal-backdrop mypage-share-backdrop"
+          onClick={() => setSharing(false)}>
+          <section
+            className="mypage-share-sheet"
+            aria-label="프로필 공유"
+            onClick={(event) => event.stopPropagation()}>
             <div className="mypage-modal-heading">
-              <div><h2>프로필 공유</h2><p>내 프로필 링크를 친구에게 공유해보세요.</p></div>
-              <button type="button" className="mypage-close-button" aria-label="닫기" onClick={() => setSharing(false)}><MyPageIcon name="close" /></button>
+              <div>
+                <h2>프로필 공유</h2>
+                <p>내 프로필 링크를 친구에게 공유해보세요.</p>
+              </div>
+              <button
+                type="button"
+                className="mypage-close-button"
+                aria-label="닫기"
+                onClick={() => setSharing(false)}>
+                <MyPageIcon name="close" />
+              </button>
             </div>
-            <div className="mypage-share-link"><span>프로필 링크</span><strong>{profileLink}</strong></div>
+            <div className="mypage-share-link">
+              <span>프로필 링크</span>
+              <strong>{profileLink}</strong>
+            </div>
             <div className="mypage-share-actions">
-              {['링크 복사', '메시지', '더보기'].map((method) => <button key={method} type="button" onClick={() => void shareProfile(method)}>{method}</button>)}
+              {['링크 복사', '메시지', '더보기'].map((method) => (
+                <button
+                  key={method}
+                  type="button"
+                  onClick={() => void shareProfile(method)}>
+                  {method}
+                </button>
+              ))}
             </div>
           </section>
         </div>

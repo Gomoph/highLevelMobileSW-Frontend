@@ -5,6 +5,7 @@ async function readError(response, fallbackMessage) {
   return new Error(body?.message || body?.error || fallbackMessage);
 }
 
+// 마이페이지 프로필 불러오기
 export async function getMyProfile(token) {
   const response = await fetch(`${API_BASE_URL}/api/members/me`, {
     headers: { Authorization: `Bearer ${token}` },
