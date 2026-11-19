@@ -209,6 +209,18 @@ export default function CreateMeetingPage({
       return;
     }
 
+    // 좌표 없이 등록하면 지도에 모임 마커를 표시할 수 없습니다.
+    if (
+      !placeSelection ||
+      !Number.isFinite(Number(placeSelection.latitude)) ||
+      !Number.isFinite(Number(placeSelection.longitude)) ||
+      placeSelection.latitude == null ||
+      placeSelection.longitude == null
+    ) {
+      setMessage('장소 검색 결과에서 모임 장소를 선택해주세요.');
+      return;
+    }
+
     if (!token) {
       setMessage('로그인 정보가 없습니다. 다시 로그인해주세요.');
       return;

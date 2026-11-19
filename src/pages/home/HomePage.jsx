@@ -1,5 +1,5 @@
 // src/pages/home/HomePage.jsx — 지도 범위·카테고리별 모임 조회와 모임 목록 표시
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getMeetings } from '../../api/meetings.js';
 import MeetingMap from '../../components/map/MeetingMap.jsx';
 import FavoritesSheet from '../favorites/FavoritesSheet.jsx';
@@ -93,6 +93,7 @@ export default function HomePage({
 }) {
   const [category, setCategory] = useState('전체');
   const [searchBounds, setSearchBounds] = useState(null);
+  const [searchVersion, setSearchVersion] = useState(0);
 
   const [allMeetings, setAllMeetings] = useState([]);
   const [meetingsLoading, setMeetingsLoading] = useState(true);
@@ -104,34 +105,31 @@ export default function HomePage({
   const [notice, setNotice] = useState('');
   const panelDrag = useRef({ startY: 0, moved: false });
 
+  // 검색 버튼을 누른 시점의 지도 범위를 조회합니다.
+  // 카테고리/찜 변경은 이미 받은 데이터로 즉시 필터링/마커 색상 갱신합니다.
   useEffect(() => {
+    if (!searchBounds) return undefined;
+
     let isCurrentRequest = true;
-
-    // 진행 중인 API 요청을 취소할 때 사용하는 객체
     const controller = new AbortController();
+    setMeetingsLoading(true);
+    setMeetingsError('');
 
-    // 백엔드에 모임 목록 요청 후 상태 저장
     getMeetings(token, {
-      bounds: searchBounds, // 서버에 보낼 지도 범위
-      category, // 카테고리
-      signal: controller.signal, // 브라우저에서 요청 취소에 사용
+      bounds: searchBounds,
+      category: '전체',
+      signal: controller.signal,
     })
       .then((result) => {
         const meetingList = Array.isArray(result) ? result : result?.meetings;
-
         if (!Array.isArray(meetingList)) {
           throw new Error('백엔드 응답이 모임 목록 형식이 아닙니다.');
         }
-
         if (isCurrentRequest) setAllMeetings(meetingList);
       })
       .catch((error) => {
-        if (isCurrentRequest) {
-          setMeetingsError(
-            error instanceof Error
-              ? error.message
-              : '모임 목록을 불러오지 못했습니다.',
-          );
+        if (isCurrentRequest && error?.name !== 'AbortError') {
+          setMeetingsError(error instanceof Error ? error.message : '모임 목록을 불러오지 못했습니다.');
         }
       })
       .finally(() => {
@@ -142,25 +140,37 @@ export default function HomePage({
       isCurrentRequest = false;
       controller.abort();
     };
-  }, [token, searchBounds, category]);
+  }, [token, searchBounds, searchVersion]);
 
-  function handleSearchArea(bounds) {
+  const handleSearchArea = useCallback((bounds) => {
     setMeetingsLoading(true);
     setMeetingsError('');
     setAllMeetings([]);
     setSelectedMeeting(null);
     setListHidden(false);
     setSearchBounds(bounds);
-  }
+    // 같은 범위에서 다시 눌러도 서버를 재조회합니다.
+    setSearchVersion((version) => version + 1);
+  }, []);
 
-  const meetings = useMemo(
-    () =>
-      allMeetings.filter((meeting) => {
-        const matchesCategory =
-          category === '전체' || meeting.category === category;
-        return matchesCategory;
-      }),
-    [allMeetings, category],
+  const meetings = useMemo(() => {
+    if (!searchBounds) return [];
+    return allMeetings.filter((meeting) => {
+      const matchesCategory = category === '전체' || meeting.category === category;
+      const lat = Number(meeting.latitude);
+      const lng = Number(meeting.longitude);
+      const hasCoordinates = meeting.latitude != null && meeting.longitude != null
+        && Number.isFinite(lat) && Number.isFinite(lng);
+      const withinBounds = hasCoordinates
+        && lat >= searchBounds.south && lat <= searchBounds.north
+        && lng >= searchBounds.west && lng <= searchBounds.east;
+      return matchesCategory && withinBounds;
+    });
+  }, [allMeetings, category, searchBounds]);
+
+  const favoriteMeetingIds = useMemo(
+    () => favoriteMeetings.map((meeting) => String(meeting.id)),
+    [favoriteMeetings],
   );
 
   const displayedMeetings = selectedMeeting
@@ -240,11 +250,6 @@ export default function HomePage({
               aria-pressed={category === item}
               className={category === item ? 'active' : ''}
               onClick={() => {
-                if (category !== item) {
-                  setMeetingsLoading(true);
-                  setMeetingsError('');
-                  setAllMeetings([]);
-                }
                 setCategory(item);
                 setSelectedMeeting(null);
               }}>
@@ -259,8 +264,11 @@ export default function HomePage({
         <section className="home-map" aria-label="지도 영역">
           {/* 지도 컴포넌트 */}
           <MeetingMap
+            meetings={meetings}
+            favoriteMeetingIds={favoriteMeetingIds}
             onLocationSelect={onLocationSelect}
             onSearchArea={handleSearchArea}
+            onMeetingSelect={onMeetingSelect}
             searching={meetingsLoading}
           />
         </section>

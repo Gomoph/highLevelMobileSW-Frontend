@@ -1,138 +1,225 @@
-// src/components/map/MeetingMap.jsx — 카카오 지도 표시와 장소 선택 및 지도 범위 검색 전달
+
 import { useEffect, useRef, useState } from 'react';
 import './MeetingMap.css';
 
 export default function MeetingMap({
+  meetings = [],
+  favoriteMeetingIds = [],
   onLocationSelect,
   onSearchArea,
+  onMeetingSelect,
   searching = false,
 }) {
   const [map, setMap] = useState(null);
+
+  // 사용자가 선택한 장소의 마커
   const markerRef = useRef(null);
+
+  // 등록된 모임들의 마커
+  const meetingMarkersRef = useRef([]);
+
+  const mapRef = useRef(null);
+  const mapContainerRef = useRef(null);
+
   const [keyword, setKeyword] = useState('');
   const [places, setPlaces] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState('');
 
-  // 1. 지도 최초 초기화
+  // 최신 콜백을 보관하여 지도 재생성 방지
+  const onLocationSelectRef = useRef(onLocationSelect);
+  const onSearchAreaRef = useRef(onSearchArea);
+  const onMeetingSelectRef = useRef(onMeetingSelect);
+
   useEffect(() => {
-    if (window.kakao && window.kakao.maps) {
-      window.kakao.maps.load(() => {
-        const container = document.getElementById('map');
-        const options = {
-          center: new window.kakao.maps.LatLng(37.581789, 127.010369), // 한성대학교
-          level: 3,
-        };
-        const mapInstance = new window.kakao.maps.Map(container, options);
-        setMap(mapInstance);
-        const geocoder = new window.kakao.maps.services.Geocoder();
+    onLocationSelectRef.current = onLocationSelect;
+    onSearchAreaRef.current = onSearchArea;
+    onMeetingSelectRef.current = onMeetingSelect;
+  }, [onLocationSelect, onSearchArea, onMeetingSelect]);
 
-        window.kakao.maps.event.addListener(mapInstance, 'click', (e) => {
-          const position = e.latLng;
-          const latitude = position.getLat();
-          const longitude = position.getLng();
 
-          if (markerRef.current) {
-            markerRef.current.setMap(null);
-          }
-
-          const nextMarker = new window.kakao.maps.Marker({ position });
-          nextMarker.setMap(mapInstance);
-          markerRef.current = nextMarker;
-          setSelectedPlace(null);
-          setSelectedAddress('주소를 찾는 중…');
-
-          // 카카오 역지오코딩은 경도, 위도 순서로 좌표를 받습니다.
-          // (위도, 경도) => 장소 이름 변환
-          geocoder.coord2Address(longitude, latitude, (result, status) => {
-            if (status === window.kakao.maps.services.Status.OK) {
-              const placeName =
-                result[0]?.road_address?.address_name ||
-                result[0]?.address?.address_name ||
-                '';
-
-              setSelectedAddress(placeName || '주소를 찾을 수 없습니다.');
-              onLocationSelect?.({ latitude, longitude, placeName });
-              return;
-            }
-
-            setSelectedAddress('주소를 찾을 수 없습니다.');
-            onLocationSelect?.({ latitude, longitude });
-          });
-        });
-      });
+  // 1. 카카오 지도 최초 초기화
+  useEffect(() => {
+    if (!window.kakao?.maps) {
+      console.error('카카오맵 SDK를 불러오지 못했습니다.');
+      return;
     }
-  }, [onLocationSelect]);
 
-  // 2. 검색 제출 처리 함수/
+    let isMounted = true;
+    let mapInstance = null;
+
+    window.kakao.maps.load(() => {
+      if (!isMounted || !mapContainerRef.current) return;
+
+      const options = {
+        center: new window.kakao.maps.LatLng(37.581789, 127.010369),
+        level: 3,
+      };
+
+      mapInstance = new window.kakao.maps.Map(mapContainerRef.current, options);
+      mapRef.current = mapInstance;
+      setMap(mapInstance);
+
+      // 초기 진입 때 현재 지도 영역의 모임을 한 번 조회합니다.
+      const bounds = mapInstance.getBounds();
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
+      onSearchAreaRef.current?.({
+        south: sw.getLat(), west: sw.getLng(),
+        north: ne.getLat(), east: ne.getLng(),
+      });
+
+      // 지도 빈 곳 클릭 시 마커를 생성하지 않습니다.
+      // 장소 검색 목록을 선택했을 때의 표시 기능은 아래 handleSelectPlace에 유지합니다.
+    });
+
+    return () => {
+      isMounted = false;
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+        markerRef.current = null;
+      }
+      meetingMarkersRef.current.forEach((marker) => marker.setMap(null));
+      meetingMarkersRef.current = [];
+      mapRef.current = null;
+    };
+  }, []);
+
+
+  // 2. 지도 범위에 있는 모임의 마커를 생성합니다.
+  // 찜에 포함된 모임만 빨간색이고, 그 외에는 파란색입니다.
+  useEffect(() => {
+    if (!map) return undefined;
+
+    // 먼저 이전 마커를 지워 중복 표시를 방지합니다.
+    meetingMarkersRef.current.forEach((marker) => marker.setMap(null));
+    meetingMarkersRef.current = [];
+
+    const kakao = window.kakao;
+    const blueImage = new kakao.maps.MarkerImage(
+      '/markers/blueMarker.png',
+      new kakao.maps.Size(32, 42),
+      { offset: new kakao.maps.Point(16, 42) }
+    );
+    const redImage = new kakao.maps.MarkerImage(
+      '/markers/redMarker.png',
+      new kakao.maps.Size(32, 42),
+      { offset: new kakao.maps.Point(16, 42) }
+    );
+
+    const favoriteIds = new Set(favoriteMeetingIds.map(String));
+    const newMarkers = [];
+
+    meetings.forEach((meeting) => {
+      if (meeting.latitude == null || meeting.longitude == null) return;
+      const latitude = Number(meeting.latitude);
+      const longitude = Number(meeting.longitude);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+      const marker = new kakao.maps.Marker({
+        position: new kakao.maps.LatLng(latitude, longitude),
+        map,
+        image: favoriteIds.has(String(meeting.id)) ? redImage : blueImage,
+        title: meeting.title ?? '',
+      });
+
+      kakao.maps.event.addListener(marker, 'click', () => {
+        onMeetingSelectRef.current?.(meeting);
+      });
+      newMarkers.push(marker);
+    });
+
+    meetingMarkersRef.current = newMarkers;
+    return () => {
+      newMarkers.forEach((marker) => marker.setMap(null));
+      if (meetingMarkersRef.current === newMarkers) meetingMarkersRef.current = [];
+    };
+  }, [map, meetings, favoriteMeetingIds]);
+
+
+  // 3. 장소 검색
   const handleSearch = (e) => {
     e.preventDefault();
+
     if (!keyword.trim()) {
       alert('검색어를 입력해 주세요!');
       return;
     }
 
-    if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
+    if (!window.kakao?.maps?.services) {
       alert('카카오 지도 라이브러리가 로드되지 않았습니다.');
       return;
     }
 
-    // 장소 검색 객체 생성
     const ps = new window.kakao.maps.services.Places();
 
-    // 키워드로 장소검색 요청
     ps.keywordSearch(keyword, (data, status) => {
-      if (status === window.kakao.maps.services.Status.OK) {
-        setPlaces(data); // 검색 결과 목록 저장
-      } else if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+      if (
+        status ===
+        window.kakao.maps.services.Status.OK
+      ) {
+        setPlaces(data);
+      } else if (
+        status ===
+        window.kakao.maps.services.Status.ZERO_RESULT
+      ) {
         alert('검색 결과가 존재하지 않습니다.');
         setPlaces([]);
-      } else if (status === window.kakao.maps.services.Status.ERROR) {
+      } else {
         alert('검색 중 오류가 발생했습니다.');
       }
     });
   };
 
-  // 3. 목록 항목 클릭 시 해당 위치로 지도 이동 및 마커 표시
+
+  // 4. 검색 결과에서 장소 선택
   const handleSelectPlace = (place) => {
     if (!map) return;
 
-    const moveLatLon = new window.kakao.maps.LatLng(place.y, place.x);
+    const moveLatLon = new window.kakao.maps.LatLng(
+      Number(place.y),
+      Number(place.x)
+    );
 
-    // 지도 중심 이동 및 확대 레벨 조정
+    // 선택한 장소로 지도 이동
     map.setCenter(moveLatLon);
     map.setLevel(3);
 
-    // 기존 마커 지우고 새 마커 생성
+    // 기존 선택 마커 제거
     if (markerRef.current) {
       markerRef.current.setMap(null);
     }
 
     const newMarker = new window.kakao.maps.Marker({
       position: moveLatLon,
+      map,
     });
-    newMarker.setMap(map);
+
     markerRef.current = newMarker;
 
     setSelectedPlace(place);
     setSelectedAddress('');
-    // 검색 결과 전달하는 값
-    onLocationSelect?.({
+
+    onLocationSelectRef.current?.({
       placeName: place.place_name,
       latitude: Number(place.y),
       longitude: Number(place.x),
     });
   };
 
+
+  // 5. 현재 지도 범위에서 모임 검색
   const handleSearchArea = () => {
     if (!map || searching) return;
-    // 현재 지도의 좌표 가져오는 코드
+
+    // 현재 화면에 보이는 지도 좌표 가져오기
     const bounds = map.getBounds();
+
     const southWest = bounds.getSouthWest();
     const northEast = bounds.getNorthEast();
 
-    // 지도에서 얻은 좌표를 HomePage.jsx로 전달하는 코드
-    onSearchArea?.({
+    // HomePage로 범위 전달
+    onSearchAreaRef.current?.({
       south: southWest.getLat(),
       west: southWest.getLng(),
       north: northEast.getLat(),
@@ -140,32 +227,54 @@ export default function MeetingMap({
     });
   };
 
+
   return (
     <div className="map-container">
-      {/* 🔍 검색창 폼 */}
-      <form onSubmit={handleSearch} className="map-search-form">
+
+      {/* 장소 검색창 */}
+      <form
+        onSubmit={handleSearch}
+        className="map-search-form"
+      >
         <input
           type="text"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          placeholder="건물명이나 상호명을 입력하세요 (예: 한성대학교 )"
+          placeholder="건물명이나 상호명을 입력하세요 (예: 한성대학교)"
           className="map-search-input"
         />
-        <button type="submit" className="map-search-button">
+
+        <button
+          type="submit"
+          className="map-search-button"
+        >
           검색
         </button>
       </form>
 
-      {/* 🗺️ 지도 영역 */}
+
+      {/* 지도 영역 */}
       <div className="map-viewport">
-        <div id="map" className="map-canvas"></div>
+
+        <div
+          ref={mapContainerRef}
+          id="map"
+          className="map-canvas"
+        />
+
+        {/* 현재 지도에서 모임 검색 */}
         <button
           type="button"
           className="map-area-search-button"
           onClick={handleSearchArea}
           disabled={!map || searching}
-          aria-busy={searching}>
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          aria-busy={searching}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
             <path
               d="M20 7v5h-5M20 12a8 8 0 1 1-2.34-5.66L20 9"
               stroke="currentColor"
@@ -174,42 +283,65 @@ export default function MeetingMap({
               strokeLinejoin="round"
             />
           </svg>
-          <span>{searching ? '검색 중…' : '현 지도에서 검색'}</span>
+
+          <span>
+            {searching
+              ? '검색 중…'
+              : '현 지도에서 검색'}
+          </span>
         </button>
       </div>
 
-      {/* 📌 선택한 장소 정보 표시 */}
+
+      {/* 선택된 장소 정보 */}
       {selectedPlace && (
         <div className="map-selection-info">
-          🎯 <strong>선택된 위치:</strong> {selectedPlace.place_name} (
-          {selectedPlace.road_address_name || selectedPlace.address_name})
+          🎯 <strong>선택된 위치:</strong>{' '}
+          {selectedPlace.place_name} (
+          {selectedPlace.road_address_name ||
+            selectedPlace.address_name})
         </div>
       )}
 
       {selectedAddress && (
         <div className="map-selection-info">
-          📍 <strong>선택한 주소:</strong> {selectedAddress}
+          📍 <strong>선택한 주소:</strong>{' '}
+          {selectedAddress}
         </div>
       )}
 
-      {/* 📜 검색 결과 목록 */}
+
+      {/* 장소 검색 결과 목록 */}
       {places.length > 0 && (
         <div className="map-results">
           <h4 className="map-results-heading">
             검색 결과 목록 ({places.length}건)
           </h4>
+
           <ul className="map-results-list">
             {places.map((place) => (
               <li
                 key={place.id}
                 onClick={() => handleSelectPlace(place)}
-                className={`map-result-item${selectedPlace?.id === place.id ? ' is-selected' : ''}`}>
-                <div className="map-place-name">{place.place_name}</div>
-                <div className="map-place-address">
-                  {place.road_address_name || place.address_name}
+                className={`map-result-item${
+                  selectedPlace?.id === place.id
+                    ? ' is-selected'
+                    : ''
+                }`}
+              >
+                <div className="map-place-name">
+                  {place.place_name}
                 </div>
+
+                <div className="map-place-address">
+                  {place.road_address_name ||
+                    place.address_name}
+                </div>
+
                 {place.phone && (
-                  <div className="map-place-phone">📞 {place.phone}</div>
+                  <div className="map-place-phone">
+                    📞 {place.phone}
+                  </div>
                 )}
               </li>
             ))}
