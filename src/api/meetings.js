@@ -75,3 +75,45 @@ export async function getMyMeetings(token) {
 
   return response.json();
 }
+
+// 공유 링크로 진입한 모임 상세 정보
+export async function getMeetingById(meetingId) {
+  const response = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}`);
+
+  if (!response.ok) {
+    throw new Error(`모임 정보를 불러오지 못했습니다. (${response.status})`);
+  }
+
+  return response.json();
+}
+
+async function requestParticipation(token, meetingId, method = 'GET') {
+  const response = await fetch(
+    `${API_BASE_URL}/api/meetings/${meetingId}/participation`,
+    {
+      method,
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+
+  const result = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(
+      result?.message || result?.detail || `참여 정보를 처리하지 못했습니다. (${response.status})`,
+    );
+  }
+
+  return result;
+}
+
+export function getMeetingParticipation(token, meetingId) {
+  return requestParticipation(token, meetingId);
+}
+
+export function joinMeeting(token, meetingId) {
+  return requestParticipation(token, meetingId, 'POST');
+}
+
+export function leaveMeeting(token, meetingId) {
+  return requestParticipation(token, meetingId, 'DELETE');
+}

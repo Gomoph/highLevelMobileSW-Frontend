@@ -6,6 +6,7 @@ import {
   getFavoriteMeetings,
   removeFavoriteMeeting,
 } from './api/favorites.js';
+import { getMeetingById } from './api/meetings.js';
 import LoginPage from './pages/auth/LoginPage.jsx';
 import FindIdPage from './pages/auth/FindIdPage.jsx';
 import FindPasswordPage from './pages/auth/FindPasswordPage.jsx';
@@ -25,6 +26,23 @@ export default function App() {
   const [detailReturnScreen, setDetailReturnScreen] = useState('home');
   const [favoriteMeetings, setFavoriteMeetings] = useState([]);
   const [favoritesError, setFavoritesError] = useState('');
+  const sharedMeetingId = new URLSearchParams(window.location.search).get('meetingId');
+
+  const handleLoginSuccess = async (info) => {
+    setLoginInfo(info);
+    if (sharedMeetingId) {
+      try {
+        const meeting = await getMeetingById(sharedMeetingId);
+        setSelectedMeeting(meeting);
+        setDetailReturnScreen('home');
+        setScreen('detail');
+        return;
+      } catch {
+        // 링크의 모임이 삭제되었거나 접근할 수 없으면 홈으로 진입합니다.
+      }
+    }
+    setScreen('home');
+  };
 
   useEffect(() => {
     const token = loginInfo?.token;
@@ -119,6 +137,11 @@ export default function App() {
           token={loginInfo.token}
           savedCount={favoriteMeetings.length}
           onOpenSaved={() => setScreen('fav')}
+          onMeetingSelect={(meeting) => {
+            setSelectedMeeting(meeting);
+            setDetailReturnScreen('mypage');
+            setScreen('detail');
+          }}
           onNameChange={(name) => setLoginInfo((current) => ({ ...current, name }))}
           onLogout={() => {
             setLoginInfo(null);
@@ -140,6 +163,7 @@ export default function App() {
       <>
         <MeetingDetail
           meeting={selectedMeeting}
+          token={loginInfo.token}
           isFavorite={favoriteMeetings.some((meeting) => meeting.id === selectedMeeting?.id)}
           onToggleFavorite={() => toggleFavorite(selectedMeeting)}
           onBack={() => setScreen(detailReturnScreen)}
@@ -177,10 +201,7 @@ export default function App() {
 
   return (
     <LoginPage
-      onLoginSuccess={(info) => {
-        setLoginInfo(info);
-        setScreen('home');
-      }}
+      onLoginSuccess={handleLoginSuccess}
       onSignup={() => setScreen('signup')}
       onFindId={() => setScreen('findId')}
       onFindPassword={() => setScreen('findPassword')}

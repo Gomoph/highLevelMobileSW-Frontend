@@ -19,6 +19,11 @@
 .meeting-detail-page * {
   box-sizing: border-box;
 }
+.phone-app-content .meeting-detail-page {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
 .meeting-detail-page svg {
   width: 22px;
   height: 22px;
@@ -59,6 +64,13 @@
   margin-left: auto;
   color: #aaa;
 }
+.meeting-detail-header .meeting-detail-share {
+  margin-left: auto;
+  color: #606a79;
+}
+.meeting-detail-header .meeting-detail-share + .meeting-detail-favorite {
+  margin-left: 0;
+}
 .meeting-detail-favorite svg {
   width: 27px;
   height: 27px;
@@ -71,6 +83,10 @@
 }
 .meeting-detail-main {
   flex: 1;
+  min-height: 0;
+}
+.phone-app-content .meeting-detail-main {
+  overflow-y: auto;
 }
 .meeting-detail-cover {
   display: flex;
@@ -176,6 +192,11 @@
 }
 .meeting-detail-actions > button:hover {
   background: #253047;
+}
+.meeting-detail-actions > button:disabled {
+  color: #7f8795;
+  background: #e8eaf0;
+  cursor: not-allowed;
 }
 .meeting-detail-actions p {
   min-height: 20px;

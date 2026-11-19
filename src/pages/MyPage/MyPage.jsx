@@ -104,6 +104,7 @@ export default function MyPage({
   hostedMeetings: hostedFromProps = [],
   savedCount = 0,
   onOpenSaved,
+  onMeetingSelect,
   onLogout,
   onNameChange,
 }) {
@@ -417,9 +418,8 @@ export default function MyPage({
                           ? (meeting.status ?? '참여 확정')
                           : (meeting.status ?? '모집 중')
                       }
-                      onClick={() =>
-                        showNotice('모임 상세 화면은 준비 중이에요.')
-                      }
+                      // 클릭 이벤트 추가
+                      onClick={() => onMeetingSelect?.(meeting)}
                     />
                   ))}
                 </div>
