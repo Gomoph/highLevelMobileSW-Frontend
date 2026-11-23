@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import './MeetingMap.css';
 
@@ -97,15 +96,15 @@ export default function MeetingMap({
 
     const kakao = window.kakao;
     const blueImage = new kakao.maps.MarkerImage(
-      '/markers/blueMarker.png',
-      new kakao.maps.Size(32, 42),
-      { offset: new kakao.maps.Point(16, 42) }
-    );
+  '/markers/blueMarker.png',
+  new kakao.maps.Size(40, 40),
+  { offset: new kakao.maps.Point(20, 36) }
+);
     const redImage = new kakao.maps.MarkerImage(
-      '/markers/redMarker.png',
-      new kakao.maps.Size(32, 42),
-      { offset: new kakao.maps.Point(16, 42) }
-    );
+  '/markers/redMarker.png',
+  new kakao.maps.Size(40, 40),
+  { offset: new kakao.maps.Point(20, 36) }
+);
 
     const favoriteIds = new Set(favoriteMeetingIds.map(String));
     const newMarkers = [];

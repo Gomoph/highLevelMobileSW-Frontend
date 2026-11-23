@@ -15,6 +15,26 @@ const CATEGORIES = [
   '스터디',
   '기타',
 ];
+// 모임 날짜의 다음 날 00:00부터 홈 지도와 목록에서만 숨깁니다.
+// 서버 데이터는 삭제하지 않으므로 마이페이지의 모임 기록은 유지됩니다.
+function getTodayDateKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function isMeetingVisibleOnHome(meeting, today) {
+  const startsAt = meeting.startsAt ?? meeting.date;
+  // 날짜 정보가 없으면 잘못된 데이터 삭제로 이어지지 않도록 그대로 둡니다.
+  if (!startsAt) return true;
+  const match = String(startsAt).match(/^(\d{4}-\d{2}-\d{2})/);
+  if (!match) return true;
+  // 날짜가 같은 날까지는 표시하고 다음 날부터 숨깁니다.
+  return match[1] >= today;
+}
+
 function PinIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -92,6 +112,7 @@ export default function HomePage({
   onToggleFavorite,
 }) {
   const [category, setCategory] = useState('전체');
+  const [today, setToday] = useState(getTodayDateKey);
   const [searchBounds, setSearchBounds] = useState(null);
   const [searchVersion, setSearchVersion] = useState(0);
 
@@ -104,6 +125,33 @@ export default function HomePage({
   const [address, setAddress] = useState('서울시 중랑구 면목동');
   const [notice, setNotice] = useState('');
   const panelDrag = useRef({ startY: 0, moved: false });
+
+  // 날짜가 바뀌는 자정에 마커와 목록을 다시 필터링합니다.
+  useEffect(() => {
+    let midnightTimer;
+    const refreshDate = () => setToday(getTodayDateKey());
+    const scheduleNextMidnight = () => {
+      window.clearTimeout(midnightTimer);
+      const now = new Date();
+      const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      midnightTimer = window.setTimeout(() => {
+        refreshDate();
+        scheduleNextMidnight();
+      }, nextMidnight.getTime() - now.getTime() + 100);
+    };
+    const checkOnReturn = () => {
+      refreshDate();
+      scheduleNextMidnight();
+    };
+    scheduleNextMidnight();
+    window.addEventListener('focus', checkOnReturn);
+    document.addEventListener('visibilitychange', checkOnReturn);
+    return () => {
+      window.clearTimeout(midnightTimer);
+      window.removeEventListener('focus', checkOnReturn);
+      document.removeEventListener('visibilitychange', checkOnReturn);
+    };
+  }, []);
 
   // 검색 버튼을 누른 시점의 지도 범위를 조회합니다.
   // 카테고리/찜 변경은 이미 받은 데이터로 즉시 필터링/마커 색상 갱신합니다.
@@ -156,6 +204,7 @@ export default function HomePage({
   const meetings = useMemo(() => {
     if (!searchBounds) return [];
     return allMeetings.filter((meeting) => {
+      if (!isMeetingVisibleOnHome(meeting, today)) return false;
       const matchesCategory = category === '전체' || meeting.category === category;
       const lat = Number(meeting.latitude);
       const lng = Number(meeting.longitude);
@@ -166,7 +215,7 @@ export default function HomePage({
         && lng >= searchBounds.west && lng <= searchBounds.east;
       return matchesCategory && withinBounds;
     });
-  }, [allMeetings, category, searchBounds]);
+  }, [allMeetings, category, searchBounds, today]);
 
   const favoriteMeetingIds = useMemo(
     () => favoriteMeetings.map((meeting) => String(meeting.id)),
