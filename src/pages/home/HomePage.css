@@ -27,7 +27,7 @@
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
-  padding: max(16px, env(safe-area-inset-top)) 18px 0;
+  padding: max(10px, env(safe-area-inset-top)) 18px 0;
   background: #fff;
 }
 
@@ -117,7 +117,7 @@
 }
 
 .home-header h1 {
-  margin: 17px 0 13px;
+  margin: 10px 0 8px;
   color: #292b2e;
   font-size: 16px;
   font-weight: 650;
@@ -128,7 +128,7 @@
   display: flex;
   gap: 7px;
   overflow-x: auto;
-  padding: 13px 0 12px;
+  padding: 7px 0 8px;
   scrollbar-width: none;
 }
 .home-categories::-webkit-scrollbar {
@@ -136,7 +136,7 @@
 }
 .home-categories button {
   flex: 0 0 auto;
-  padding: 7px 12px;
+  padding: 6px 11px;
   border: 1px solid #e7e9ec;
   border-radius: 999px;
   color: #777b82;
