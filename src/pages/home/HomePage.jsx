@@ -152,6 +152,7 @@ export default function HomePage({
   onToggleFavorite,
 }) {
   const [category, setCategory] = useState('전체');
+  const [meetingSort, setMeetingSort] = useState('latest');
   const [today, setToday] = useState(getTodayDateKey);
   const [searchBounds, setSearchBounds] = useState(null);
   const [searchVersion, setSearchVersion] = useState(0);
@@ -192,7 +193,10 @@ export default function HomePage({
             // 기존 백엔드가 새 위치 필드를 지원하지 않아도 화면 복원은 유지합니다.
           });
         }
-        const savedAddress = profile?.mapLocationAddress || cachedLocation?.address || profile?.address;
+        const savedAddress =
+          profile?.mapLocationAddress ||
+          cachedLocation?.address ||
+          profile?.address;
         if (savedAddress) {
           setAddress(savedAddress);
         }
@@ -222,44 +226,47 @@ export default function HomePage({
     };
   }, [token]);
 
-  const handleAddressSelect = useCallback(async (selection) => {
-    if (addressSaving) return;
-    setAddressSaving(true);
-    try {
-      const savedProfile = await updateMyProfile(token, {
-        mapLocationAddress: selection.address,
-        locationLatitude: selection.latitude,
-        locationLongitude: selection.longitude,
-      });
-      const isSavedToDatabase =
-        savedProfile?.mapLocationAddress === selection.address &&
-        Number(savedProfile.locationLatitude) === selection.latitude &&
-        Number(savedProfile.locationLongitude) === selection.longitude;
-      const selectedLocation = {
-        address: selection.address,
-        latitude: selection.latitude,
-        longitude: selection.longitude,
-      };
-      storeMapLocation(token, selectedLocation);
-      setAddress(savedProfile.mapLocationAddress || selection.address);
-      setMapCenter({
-        latitude: selection.latitude,
-        longitude: selection.longitude,
-      });
-      setAddressSearchOpen(false);
-      setNotice(
-        isSavedToDatabase
-          ? '주소와 지도 위치를 저장했어요.'
-          : '이 기기에는 주소를 저장했지만 서버 DB 저장이 확인되지 않았어요. 백엔드를 재시작한 뒤 다시 저장해 주세요.',
-      );
-    } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : '주소를 저장하지 못했어요.',
-      );
-    } finally {
-      setAddressSaving(false);
-    }
-  }, [addressSaving, token]);
+  const handleAddressSelect = useCallback(
+    async (selection) => {
+      if (addressSaving) return;
+      setAddressSaving(true);
+      try {
+        const savedProfile = await updateMyProfile(token, {
+          mapLocationAddress: selection.address,
+          locationLatitude: selection.latitude,
+          locationLongitude: selection.longitude,
+        });
+        const isSavedToDatabase =
+          savedProfile?.mapLocationAddress === selection.address &&
+          Number(savedProfile.locationLatitude) === selection.latitude &&
+          Number(savedProfile.locationLongitude) === selection.longitude;
+        const selectedLocation = {
+          address: selection.address,
+          latitude: selection.latitude,
+          longitude: selection.longitude,
+        };
+        storeMapLocation(token, selectedLocation);
+        setAddress(savedProfile.mapLocationAddress || selection.address);
+        setMapCenter({
+          latitude: selection.latitude,
+          longitude: selection.longitude,
+        });
+        setAddressSearchOpen(false);
+        setNotice(
+          isSavedToDatabase
+            ? '주소와 지도 위치를 저장했어요.'
+            : '이 기기에는 주소를 저장했지만 서버 DB 저장이 확인되지 않았어요. 백엔드를 재시작한 뒤 다시 저장해 주세요.',
+        );
+      } catch (error) {
+        setNotice(
+          error instanceof Error ? error.message : '주소를 저장하지 못했어요.',
+        );
+      } finally {
+        setAddressSaving(false);
+      }
+    },
+    [addressSaving, token],
+  );
 
   // 날짜가 바뀌는 자정에 마커와 목록을 다시 필터링합니다.
   useEffect(() => {
@@ -375,9 +382,30 @@ export default function HomePage({
     [favoriteMeetings],
   );
 
-  const displayedMeetings = selectedMeeting
-    ? meetings.filter((meeting) => meeting.id === selectedMeeting.id)
-    : meetings;
+  const displayedMeetings = useMemo(() => {
+    const visibleMeetings = selectedMeeting
+      ? meetings.filter((meeting) => meeting.id === selectedMeeting.id)
+      : meetings;
+
+    return [...visibleMeetings].sort((a, b) => {
+      if (meetingSort === 'time') {
+        const aTime = Date.parse(a.startsAt ?? a.date ?? '');
+        const bTime = Date.parse(b.startsAt ?? b.date ?? '');
+        const validATime = Number.isFinite(aTime) ? aTime : Infinity;
+        const validBTime = Number.isFinite(bTime) ? bTime : Infinity;
+        return validATime - validBTime;
+      }
+
+      const aCreated = Date.parse(a.createdAt ?? a.createdDate ?? '');
+      const bCreated = Date.parse(b.createdAt ?? b.createdDate ?? '');
+      if (Number.isFinite(aCreated) && Number.isFinite(bCreated)) {
+        return bCreated - aCreated;
+      }
+
+      // 기존 데이터에 등록 시각이 없으면 자동 증가 ID를 최신 순서의 대체 기준으로 씁니다.
+      return Number(b.id) - Number(a.id);
+    });
+  }, [meetings, meetingSort, selectedMeeting]);
 
   function handlePanelPointerDown(event) {
     panelDrag.current = { startY: event.clientY, moved: false };
@@ -437,7 +465,7 @@ export default function HomePage({
             </button>
           </div>
         </div>
-        <h1>{userName || '하민'}님, 오늘은 어디에서 함께할까요?</h1>
+        <h1>{userName}님, 오늘은 어디에서 함께할까요?</h1>
         <div className="home-categories" aria-label="모임 카테고리">
           {CATEGORIES.map((item) => (
             <button
@@ -495,9 +523,14 @@ export default function HomePage({
               </h2>
               <p>가까운 곳에서, 새로운 만남을 시작해요</p>
             </div>
-            <button onClick={() => setNotice('모임 정렬은 준비 중입니다.')}>
-              최신순 ⌄
-            </button>
+            <select
+              className="home-sort-select"
+              aria-label="모임 정렬"
+              value={meetingSort}
+              onChange={(event) => setMeetingSort(event.target.value)}>
+              <option value="latest">최신순</option>
+              <option value="time">시간순</option>
+            </select>
           </div>
           {/* 모임 카드 필터링 영역 */}
           <div className="home-meeting-list">

@@ -47,7 +47,10 @@ function findRegion(word) {
   );
 }
 
-const DEFAULT_CENTER = Object.freeze({ latitude: 37.581789, longitude: 127.010369 });
+const DEFAULT_CENTER = Object.freeze({
+  latitude: 37.581789,
+  longitude: 127.010369,
+});
 
 export default function MeetingMap({
   meetings = [],
@@ -92,7 +95,6 @@ export default function MeetingMap({
     centerRef.current = center;
   }, [center]);
 
-
   // 1. 카카오 지도 최초 초기화
   useEffect(() => {
     if (!window.kakao?.maps) {
@@ -123,8 +125,10 @@ export default function MeetingMap({
       const sw = bounds.getSouthWest();
       const ne = bounds.getNorthEast();
       onSearchAreaRef.current?.({
-        south: sw.getLat(), west: sw.getLng(),
-        north: ne.getLat(), east: ne.getLng(),
+        south: sw.getLat(),
+        west: sw.getLng(),
+        north: ne.getLat(),
+        east: ne.getLng(),
       });
 
       // 지도 빈 곳 클릭 시 마커를 생성하지 않습니다.
@@ -166,7 +170,6 @@ export default function MeetingMap({
     window.kakao.maps.event.addListener(map, 'idle', handleMapIdle);
   }, [map, center]);
 
-
   // 2. 지도 범위에 있는 모임의 마커를 생성합니다.
   // 찜에 포함된 모임만 빨간색이고, 그 외에는 파란색입니다.
   useEffect(() => {
@@ -206,10 +209,10 @@ export default function MeetingMap({
     meetingMarkersRef.current = newMarkers;
     return () => {
       newMarkers.forEach((marker) => marker.setMap(null));
-      if (meetingMarkersRef.current === newMarkers) meetingMarkersRef.current = [];
+      if (meetingMarkersRef.current === newMarkers)
+        meetingMarkersRef.current = [];
     };
   }, [map, meetings, favoriteMeetingIds]);
-
 
   // 현재 지도 범위 + 키워드로 모임 조회를 요청합니다.
   const requestSearch = (moreKeyword) => {
@@ -276,14 +279,13 @@ export default function MeetingMap({
     window.setTimeout(run, 700);
   };
 
-
   // 4. 검색 결과에서 장소 선택
   const handleSelectPlace = (place) => {
     if (!map) return;
 
     const moveLatLon = new window.kakao.maps.LatLng(
       Number(place.y),
-      Number(place.x)
+      Number(place.x),
     );
 
     // 선택한 장소로 지도 이동
@@ -312,7 +314,6 @@ export default function MeetingMap({
     });
   };
 
-
   // 5. 현재 지도 범위에서 모임 검색
   const handleSearchArea = () => {
     if (!map || searching) return;
@@ -335,40 +336,26 @@ export default function MeetingMap({
     );
   };
 
-
   return (
     <div className="map-container">
-
       {/* 장소 검색창 */}
-      <form
-        onSubmit={handleSearch}
-        className="map-search-form"
-      >
+      <form onSubmit={handleSearch} className="map-search-form">
         <input
           type="text"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          placeholder="지역과 모임을 함께 검색하세요 (예: 한성대 클라이밍)"
+          placeholder="예: 한성대 클라이밍"
           className="map-search-input"
         />
 
-        <button
-          type="submit"
-          className="map-search-button"
-        >
+        <button type="submit" className="map-search-button">
           검색
         </button>
       </form>
 
-
       {/* 지도 영역 */}
       <div className="map-viewport">
-
-        <div
-          ref={mapContainerRef}
-          id="map"
-          className="map-canvas"
-        />
+        <div ref={mapContainerRef} id="map" className="map-canvas" />
 
         {/* 현재 지도에서 모임 검색 */}
         <button
@@ -376,26 +363,19 @@ export default function MeetingMap({
           className="map-area-search-button"
           onClick={handleSearchArea}
           disabled={!map || searching}
-          aria-busy={searching}
-        >
+          aria-busy={searching}>
           <FiRefreshCw aria-hidden="true" />
 
-          <span>
-            {searching
-              ? '검색 중…'
-              : '이 지도에서 검색'}
-          </span>
+          <span>{searching ? '검색 중…' : '이 지도에서 검색'}</span>
         </button>
       </div>
-
 
       {/* 선택된 장소 정보 */}
       {selectedPlace && (
         <div className="map-selection-info">
           <FiTarget aria-hidden="true" /> <strong>선택된 위치:</strong>{' '}
           {selectedPlace.place_name} (
-          {selectedPlace.road_address_name ||
-            selectedPlace.address_name})
+          {selectedPlace.road_address_name || selectedPlace.address_name})
         </div>
       )}
 
@@ -405,7 +385,6 @@ export default function MeetingMap({
           {selectedAddress}
         </div>
       )}
-
 
       {/* 장소 검색 결과 목록 */}
       {places.length > 0 && (
@@ -420,24 +399,16 @@ export default function MeetingMap({
                 key={place.id}
                 onClick={() => handleSelectPlace(place)}
                 className={`map-result-item${
-                  selectedPlace?.id === place.id
-                    ? ' is-selected'
-                    : ''
-                }`}
-              >
-                <div className="map-place-name">
-                  {place.place_name}
-                </div>
+                  selectedPlace?.id === place.id ? ' is-selected' : ''
+                }`}>
+                <div className="map-place-name">{place.place_name}</div>
 
                 <div className="map-place-address">
-                  {place.road_address_name ||
-                    place.address_name}
+                  {place.road_address_name || place.address_name}
                 </div>
 
                 {place.phone && (
-                  <div className="map-place-phone">
-                    📞 {place.phone}
-                  </div>
+                  <div className="map-place-phone">📞 {place.phone}</div>
                 )}
               </li>
             ))}
