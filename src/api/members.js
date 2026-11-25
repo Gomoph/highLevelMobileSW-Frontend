@@ -30,6 +30,9 @@ export async function updateMyProfile(token, profile) {
       address: profile.address,
       addressDetail: profile.addressDetail,
       introduction: profile.introduction,
+      mapLocationAddress: profile.mapLocationAddress,
+      locationLatitude: profile.locationLatitude,
+      locationLongitude: profile.locationLongitude,
     }),
   });
 

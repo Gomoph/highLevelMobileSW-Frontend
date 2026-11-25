@@ -3,8 +3,11 @@ import { FiMapPin, FiRefreshCw, FiTarget } from 'react-icons/fi';
 import { createCategoryMarkerImage } from './categoryMarker.js';
 import './MeetingMap.css';
 
+const DEFAULT_CENTER = Object.freeze({ latitude: 37.581789, longitude: 127.010369 });
+
 export default function MeetingMap({
   meetings = [],
+  center = DEFAULT_CENTER,
   favoriteMeetingIds = [],
   onLocationSelect,
   onSearchArea,
@@ -21,6 +24,7 @@ export default function MeetingMap({
 
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
+  const centerRef = useRef(center);
 
   const [keyword, setKeyword] = useState('');
   const [places, setPlaces] = useState([]);
@@ -38,6 +42,10 @@ export default function MeetingMap({
     onMeetingSelectRef.current = onMeetingSelect;
   }, [onLocationSelect, onSearchArea, onMeetingSelect]);
 
+  useEffect(() => {
+    centerRef.current = center;
+  }, [center]);
+
 
   // 1. 카카오 지도 최초 초기화
   useEffect(() => {
@@ -53,7 +61,10 @@ export default function MeetingMap({
       if (!isMounted || !mapContainerRef.current) return;
 
       const options = {
-        center: new window.kakao.maps.LatLng(37.581789, 127.010369),
+        center: new window.kakao.maps.LatLng(
+          centerRef.current.latitude,
+          centerRef.current.longitude,
+        ),
         level: 3,
       };
 
@@ -85,6 +96,28 @@ export default function MeetingMap({
       mapRef.current = null;
     };
   }, []);
+
+  // 주소를 선택하면 지도를 이동하고, 이동한 범위의 모임도 다시 조회합니다.
+  useEffect(() => {
+    if (!map || !center) return;
+    map.setLevel(3);
+    map.setCenter(
+      new window.kakao.maps.LatLng(center.latitude, center.longitude),
+    );
+    const handleMapIdle = () => {
+      window.kakao.maps.event.removeListener(map, 'idle', handleMapIdle);
+      const bounds = map.getBounds();
+      const southWest = bounds.getSouthWest();
+      const northEast = bounds.getNorthEast();
+      onSearchAreaRef.current?.({
+        south: southWest.getLat(),
+        west: southWest.getLng(),
+        north: northEast.getLat(),
+        east: northEast.getLng(),
+      });
+    };
+    window.kakao.maps.event.addListener(map, 'idle', handleMapIdle);
+  }, [map, center]);
 
 
   // 2. 지도 범위에 있는 모임의 마커를 생성합니다.

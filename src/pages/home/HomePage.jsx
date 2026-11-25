@@ -10,8 +10,10 @@ import {
   FiPlus,
 } from 'react-icons/fi';
 import { getMeetings } from '../../api/meetings.js';
+import { getMyProfile, updateMyProfile } from '../../api/members.js';
 import MeetingMap from '../../components/map/MeetingMap.jsx';
 import FavoritesSheet from '../favorites/FavoritesSheet.jsx';
+import AddressSearch from './AddressSearch.jsx';
 import './HomePage.css';
 
 const CATEGORIES = [
@@ -24,6 +26,45 @@ const CATEGORIES = [
   '스터디',
   '기타',
 ];
+
+function getMapLocationStorageKey(token) {
+  return `gomoph.mapLocation.${token}`;
+}
+
+function readStoredMapLocation(token) {
+  if (!token) return null;
+  try {
+    const stored = sessionStorage.getItem(getMapLocationStorageKey(token));
+    const location = stored ? JSON.parse(stored) : null;
+    if (
+      typeof location?.address !== 'string' ||
+      !Number.isFinite(Number(location.latitude)) ||
+      !Number.isFinite(Number(location.longitude))
+    ) {
+      return null;
+    }
+    return {
+      address: location.address,
+      latitude: Number(location.latitude),
+      longitude: Number(location.longitude),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function storeMapLocation(token, location) {
+  if (!token) return;
+  try {
+    sessionStorage.setItem(
+      getMapLocationStorageKey(token),
+      JSON.stringify(location),
+    );
+  } catch {
+    // 브라우저 저장소를 사용할 수 없어도 서버 저장은 계속 진행합니다.
+  }
+}
+
 // 모임 날짜의 다음 날 00:00부터 홈 지도와 목록에서만 숨깁니다.
 // 서버 데이터는 삭제하지 않으므로 마이페이지의 모임 기록은 유지됩니다.
 function getTodayDateKey() {
@@ -89,7 +130,9 @@ function MeetingCard({ meeting, selected, onSelect }) {
           {meeting.currentMembers != null
             ? `${meeting.currentMembers} / ${meeting.maxMembers}명`
             : `최대 ${meeting.maxMembers ?? '-'}명`}
-          <span>모임 보기 <FiChevronRight aria-hidden="true" /></span>
+          <span>
+            모임 보기 <FiChevronRight aria-hidden="true" />
+          </span>
         </span>
       </span>
     </button>
@@ -119,9 +162,103 @@ export default function HomePage({
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [listExpanded, setListExpanded] = useState(false);
   const [listHidden, setListHidden] = useState(false);
-  const [address, setAddress] = useState('서울시 중랑구 면목동');
+  const [address, setAddress] = useState(
+    () => readStoredMapLocation(token)?.address || '서울시 중랑구 면목동',
+  );
+  const [mapCenter, setMapCenter] = useState({
+    latitude: readStoredMapLocation(token)?.latitude ?? 37.581789,
+    longitude: readStoredMapLocation(token)?.longitude ?? 127.010369,
+  });
+  const [addressSearchOpen, setAddressSearchOpen] = useState(false);
+  const [addressSaving, setAddressSaving] = useState(false);
   const [notice, setNotice] = useState('');
   const panelDrag = useRef({ startY: 0, moved: false });
+
+  useEffect(() => {
+    if (!token) return undefined;
+    let isCurrent = true;
+
+    getMyProfile(token)
+      .then((profile) => {
+        if (!isCurrent) return;
+        const cachedLocation = readStoredMapLocation(token);
+        if (cachedLocation && !profile?.mapLocationAddress) {
+          updateMyProfile(token, {
+            mapLocationAddress: cachedLocation.address,
+            locationLatitude: cachedLocation.latitude,
+            locationLongitude: cachedLocation.longitude,
+          }).catch(() => {
+            // 기존 백엔드가 새 위치 필드를 지원하지 않아도 화면 복원은 유지합니다.
+          });
+        }
+        const savedAddress = profile?.mapLocationAddress || cachedLocation?.address || profile?.address;
+        if (savedAddress) {
+          setAddress(savedAddress);
+        }
+        if (
+          Number.isFinite(Number(profile?.locationLatitude)) &&
+          Number.isFinite(Number(profile?.locationLongitude)) &&
+          profile?.locationLatitude != null &&
+          profile?.locationLongitude != null
+        ) {
+          setMapCenter({
+            latitude: Number(profile.locationLatitude),
+            longitude: Number(profile.locationLongitude),
+          });
+        } else if (cachedLocation) {
+          setMapCenter({
+            latitude: cachedLocation.latitude,
+            longitude: cachedLocation.longitude,
+          });
+        }
+      })
+      .catch(() => {
+        // 기존 로그인/지도 진입은 프로필 조회 실패와 무관하게 계속 사용할 수 있습니다.
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [token]);
+
+  const handleAddressSelect = useCallback(async (selection) => {
+    if (addressSaving) return;
+    setAddressSaving(true);
+    try {
+      const savedProfile = await updateMyProfile(token, {
+        mapLocationAddress: selection.address,
+        locationLatitude: selection.latitude,
+        locationLongitude: selection.longitude,
+      });
+      const isSavedToDatabase =
+        savedProfile?.mapLocationAddress === selection.address &&
+        Number(savedProfile.locationLatitude) === selection.latitude &&
+        Number(savedProfile.locationLongitude) === selection.longitude;
+      const selectedLocation = {
+        address: selection.address,
+        latitude: selection.latitude,
+        longitude: selection.longitude,
+      };
+      storeMapLocation(token, selectedLocation);
+      setAddress(savedProfile.mapLocationAddress || selection.address);
+      setMapCenter({
+        latitude: selection.latitude,
+        longitude: selection.longitude,
+      });
+      setAddressSearchOpen(false);
+      setNotice(
+        isSavedToDatabase
+          ? '주소와 지도 위치를 저장했어요.'
+          : '이 기기에는 주소를 저장했지만 서버 DB 저장이 확인되지 않았어요. 백엔드를 재시작한 뒤 다시 저장해 주세요.',
+      );
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : '주소를 저장하지 못했어요.',
+      );
+    } finally {
+      setAddressSaving(false);
+    }
+  }, [addressSaving, token]);
 
   // 날짜가 바뀌는 자정에 마커와 목록을 다시 필터링합니다.
   useEffect(() => {
@@ -130,11 +267,18 @@ export default function HomePage({
     const scheduleNextMidnight = () => {
       window.clearTimeout(midnightTimer);
       const now = new Date();
-      const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      midnightTimer = window.setTimeout(() => {
-        refreshDate();
-        scheduleNextMidnight();
-      }, nextMidnight.getTime() - now.getTime() + 100);
+      const nextMidnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+      );
+      midnightTimer = window.setTimeout(
+        () => {
+          refreshDate();
+          scheduleNextMidnight();
+        },
+        nextMidnight.getTime() - now.getTime() + 100,
+      );
     };
     const checkOnReturn = () => {
       refreshDate();
@@ -172,7 +316,11 @@ export default function HomePage({
       })
       .catch((error) => {
         if (isCurrentRequest && error?.name !== 'AbortError') {
-          setMeetingsError(error instanceof Error ? error.message : '모임 목록을 불러오지 못했습니다.');
+          setMeetingsError(
+            error instanceof Error
+              ? error.message
+              : '모임 목록을 불러오지 못했습니다.',
+          );
         }
       })
       .finally(() => {
@@ -200,14 +348,21 @@ export default function HomePage({
     if (!searchBounds) return [];
     return allMeetings.filter((meeting) => {
       if (!isMeetingVisibleOnHome(meeting, today)) return false;
-      const matchesCategory = category === '전체' || meeting.category === category;
+      const matchesCategory =
+        category === '전체' || meeting.category === category;
       const lat = Number(meeting.latitude);
       const lng = Number(meeting.longitude);
-      const hasCoordinates = meeting.latitude != null && meeting.longitude != null
-        && Number.isFinite(lat) && Number.isFinite(lng);
-      const withinBounds = hasCoordinates
-        && lat >= searchBounds.south && lat <= searchBounds.north
-        && lng >= searchBounds.west && lng <= searchBounds.east;
+      const hasCoordinates =
+        meeting.latitude != null &&
+        meeting.longitude != null &&
+        Number.isFinite(lat) &&
+        Number.isFinite(lng);
+      const withinBounds =
+        hasCoordinates &&
+        lat >= searchBounds.south &&
+        lat <= searchBounds.north &&
+        lng >= searchBounds.west &&
+        lng <= searchBounds.east;
       return matchesCategory && withinBounds;
     });
   }, [allMeetings, category, searchBounds, today]);
@@ -260,13 +415,8 @@ export default function HomePage({
             <span className="home-location-caption">현재 위치 기준</span>
             <button
               className="home-location"
-              onClick={() =>
-                setAddress(
-                  address === '서울시 중랑구 면목동'
-                    ? '서울시 중랑구 상봉동'
-                    : '서울시 중랑구 면목동',
-                )
-              }>
+              type="button"
+              onClick={() => setAddressSearchOpen(true)}>
               <PinIcon />
               {address}
               <FiChevronDown className="home-chevron" aria-hidden="true" />
@@ -307,6 +457,7 @@ export default function HomePage({
           {/* 지도 컴포넌트 */}
           <MeetingMap
             meetings={meetings}
+            center={mapCenter}
             favoriteMeetingIds={favoriteMeetingIds}
             onLocationSelect={onLocationSelect}
             onSearchArea={handleSearchArea}
@@ -388,6 +539,14 @@ export default function HomePage({
             ×
           </button>
         </div>
+      )}
+      {addressSearchOpen && (
+        <AddressSearch
+          initialAddress={address}
+          saving={addressSaving}
+          onClose={() => setAddressSearchOpen(false)}
+          onSelect={handleAddressSelect}
+        />
       )}
       {favoritesOpen && (
         <FavoritesSheet

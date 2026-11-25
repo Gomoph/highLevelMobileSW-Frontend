@@ -19,18 +19,56 @@ import CreateMeetingPage from './pages/meetings/CreateMeetingPage.jsx';
 import MeetingDetail from './pages/meetings/MeetingDetail.jsx';
 import MyPage from './pages/MyPage/MyPage.jsx';
 
+const LOGIN_STORAGE_KEY = 'gomoph.loginInfo';
+
+function readStoredLoginInfo() {
+  try {
+    const stored = sessionStorage.getItem(LOGIN_STORAGE_KEY);
+    if (!stored) return null;
+
+    const loginInfo = JSON.parse(stored);
+    if (typeof loginInfo?.token !== 'string' || !loginInfo.token) {
+      sessionStorage.removeItem(LOGIN_STORAGE_KEY);
+      return null;
+    }
+    return loginInfo;
+  } catch {
+    return null;
+  }
+}
+
+function clearStoredLoginInfo() {
+  try {
+    sessionStorage.removeItem(LOGIN_STORAGE_KEY);
+  } catch {
+    // 저장소 사용이 제한된 환경에서도 로그아웃은 계속 진행합니다.
+  }
+}
+
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [screen, setScreen] = useState('home');
-  // 로그인 정보는 메모리에 보관하며 새로고침하면 초기화됩니다.
-  const [loginInfo, setLoginInfo] = useState(null);
+  // 현재 탭에서 새로고침해도 로그인 정보를 복원합니다.
+  const [loginInfo, setLoginInfo] = useState(readStoredLoginInfo);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [detailReturnScreen, setDetailReturnScreen] = useState('home');
   const [favoriteMeetings, setFavoriteMeetings] = useState([]);
   const [favoritesError, setFavoritesError] = useState('');
   const sharedMeetingId = new URLSearchParams(location.search).get('meetingId');
+
+  useEffect(() => {
+    try {
+      if (loginInfo?.token) {
+        sessionStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(loginInfo));
+      } else {
+        sessionStorage.removeItem(LOGIN_STORAGE_KEY);
+      }
+    } catch {
+      // 저장소 사용이 제한된 환경에서는 현재 앱 메모리 내에서 로그인 상태를 유지합니다.
+    }
+  }, [loginInfo]);
 
   const handleLoginSuccess = async (info) => {
     setLoginInfo(info);
@@ -202,6 +240,7 @@ export default function App() {
           onNameChange={(name) => setLoginInfo((current) => ({ ...current, name }))}
           onLogout={() => {
             setLoginInfo(null);
+            clearStoredLoginInfo();
             setFavoriteMeetings([]);
             setFavoritesError('');
             setScreen('home');
