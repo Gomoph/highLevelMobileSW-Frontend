@@ -155,6 +155,7 @@ export default function HomePage({
   const [today, setToday] = useState(getTodayDateKey);
   const [searchBounds, setSearchBounds] = useState(null);
   const [searchVersion, setSearchVersion] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   const [allMeetings, setAllMeetings] = useState([]);
   const [meetingsLoading, setMeetingsLoading] = useState(true);
@@ -305,6 +306,7 @@ export default function HomePage({
     getMeetings(token, {
       bounds: searchBounds,
       category: '전체',
+      keyword: searchKeyword,
       signal: controller.signal,
     })
       .then((result) => {
@@ -331,14 +333,15 @@ export default function HomePage({
       isCurrentRequest = false;
       controller.abort();
     };
-  }, [token, searchBounds, searchVersion]);
+  }, [token, searchBounds, searchKeyword, searchVersion]);
 
-  const handleSearchArea = useCallback((bounds) => {
+  const handleSearchArea = useCallback((bounds, keyword = '') => {
     setMeetingsLoading(true);
     setMeetingsError('');
     setAllMeetings([]);
     setSelectedMeeting(null);
     setListHidden(false);
+    setSearchKeyword(keyword);
     setSearchBounds(bounds);
     // 같은 범위에서 다시 눌러도 서버를 재조회합니다.
     setSearchVersion((version) => version + 1);

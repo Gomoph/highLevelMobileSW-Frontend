@@ -31,7 +31,7 @@ export async function createMeeting({ token, meeting }) {
 }
 
 // 목록 조회
-export async function getMeetings(token, { bounds, category, signal } = {}) {
+export async function getMeetings(token, { bounds, category, keyword, signal } = {}) {
   const params = new URLSearchParams();
   if (bounds) {
     for (const key of ['south', 'north', 'west', 'east']) {
@@ -39,6 +39,7 @@ export async function getMeetings(token, { bounds, category, signal } = {}) {
     }
   }
   if (category && category !== '전체') params.set('category', category);
+  if (keyword) params.set('keyword', keyword);
 
   const query = params.toString();
 
