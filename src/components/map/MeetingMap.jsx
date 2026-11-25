@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FiMapPin, FiRefreshCw, FiTarget } from 'react-icons/fi';
+import { createCategoryMarkerImage } from './categoryMarker.js';
 import './MeetingMap.css';
 
 export default function MeetingMap({
@@ -96,17 +97,6 @@ export default function MeetingMap({
     meetingMarkersRef.current = [];
 
     const kakao = window.kakao;
-    const blueImage = new kakao.maps.MarkerImage(
-  '/markers/blueMarker.png',
-  new kakao.maps.Size(40, 40),
-  { offset: new kakao.maps.Point(20, 36) }
-);
-    const redImage = new kakao.maps.MarkerImage(
-  '/markers/redMarker.png',
-  new kakao.maps.Size(40, 40),
-  { offset: new kakao.maps.Point(20, 36) }
-);
-
     const favoriteIds = new Set(favoriteMeetingIds.map(String));
     const newMarkers = [];
 
@@ -119,7 +109,11 @@ export default function MeetingMap({
       const marker = new kakao.maps.Marker({
         position: new kakao.maps.LatLng(latitude, longitude),
         map,
-        image: favoriteIds.has(String(meeting.id)) ? redImage : blueImage,
+        image: createCategoryMarkerImage(
+          kakao.maps,
+          meeting.category,
+          favoriteIds.has(String(meeting.id)),
+        ),
         title: meeting.title ?? '',
       });
 
