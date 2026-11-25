@@ -1,54 +1,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  FiArrowRight,
+  FiCalendar,
+  FiImage,
+  FiMapPin,
+  FiUsers,
+  FiUser,
+  FiX,
+} from 'react-icons/fi';
 import { getMyProfile, updateMyProfile } from '../../api/members.js';
 import { getMyMeetings } from '../../api/meetings.js';
 import './MyPage.css';
 
-function MyPageIcon({ name, className = '' }) {
-  const paths = {
-    user: (
-      <>
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
-      </>
-    ),
-    pin: (
-      <>
-        <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
-        <circle cx="12" cy="10" r="2.5" />
-      </>
-    ),
-    people: (
-      <>
-        <circle cx="9" cy="8" r="3" />
-        <path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M16 5a3 3 0 0 1 0 6M18 14a4 4 0 0 1 4 4v3" />
-      </>
-    ),
-    image: (
-      <>
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <circle cx="8.5" cy="8.5" r="1.5" />
-        <path d="m21 15-5-5L5 21" />
-      </>
-    ),
-    arrow: <path d="m9 18 6-6-6-6" />,
-    close: (
-      <>
-        <path d="m18 6-12 12M6 6l12 12" />
-      </>
-    ),
-    calendar: (
-      <>
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <path d="M16 2v4M8 2v4M3 10h18" />
-      </>
-    ),
-  };
+const MYPAGE_ICONS = {
+  user: FiUser,
+  pin: FiMapPin,
+  people: FiUsers,
+  image: FiImage,
+  arrow: FiArrowRight,
+  close: FiX,
+  calendar: FiCalendar,
+};
 
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
-      {paths[name]}
-    </svg>
-  );
+function MyPageIcon({ name, className = '' }) {
+  const Icon = MYPAGE_ICONS[name];
+  return <Icon className={className} aria-hidden="true" />;
 }
 
 function MeetingCard({ meeting, status, onClick }) {
@@ -348,12 +324,12 @@ export default function MyPage({
               <button
                 type="button"
                 onClick={() => showNotice('고객센터는 준비 중이에요.')}>
-                고객센터 <MyPageIcon name="arrow" />
+                고객센터
               </button>
               <button
                 type="button"
                 onClick={() => showNotice('약관 및 정책은 준비 중이에요.')}>
-                약관 및 정책 <MyPageIcon name="arrow" />
+                약관 및 정책
               </button>
               <button
                 type="button"

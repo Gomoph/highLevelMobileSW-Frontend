@@ -1,5 +1,6 @@
 // src/components/layout/BottomNavigation.jsx — 주요 메뉴의 하단 탐색과 선택 상태 표시
 import { useEffect, useState } from 'react';
+import { FiHeart, FiHome, FiUser } from 'react-icons/fi';
 import './BottomNavigation.css';
 
 const ITEMS = [
@@ -8,16 +9,11 @@ const ITEMS = [
   { id: 'fav', label: '찜', message: '찜 목록은 준비 중입니다.' },
 ];
 
+const FOOTER_ICONS = { mypage: FiUser, home: FiHome, fav: FiHeart };
+
 function FooterIcon({ name }) {
-  if (name === 'mypage') {
-    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-  }
-
-  if (name === 'fav') {
-    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1 7.8 7.7 7.8-7.7 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg>;
-  }
-
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2h-4v-9H9v9H5a2 2 0 0 1-2-2z"/></svg>;
+  const Icon = FOOTER_ICONS[name];
+  return <Icon aria-hidden="true" />;
 }
 
 export default function BottomNavigation({ activeTab = 'home', onNavigate }) {

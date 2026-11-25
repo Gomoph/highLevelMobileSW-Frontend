@@ -1,6 +1,7 @@
 // src/pages/auth/SignupPage.jsx — 회원 정보 입력과 회원가입 요청 처리
 
 import { useState } from 'react';
+import { FiArrowLeft, FiChevronRight, FiSearch } from 'react-icons/fi';
 import './Auth.css';
 import './SignupPage.css';
 
@@ -70,7 +71,7 @@ function formatPhoneNumber(value) {
   return `${digits.slice(0, areaLength)}-${digits.slice(areaLength, middleEnd)}-${digits.slice(middleEnd)}`;
 }
 
-export default function SignupPage({ onBack }) {
+export default function SignupPage({ onBack, onSignupSuccess = onBack }) {
   // 초기값 & 상태 설정
 
   // 안내 메세지
@@ -248,7 +249,7 @@ export default function SignupPage({ onBack }) {
 
       if (response.ok) {
         setMessage('회원가입이 완료되었습니다!');
-        onBack(); // 회원가입 성공 시 -> 로그인 화면으로 전환
+        onSignupSuccess?.();
       } else {
         setMessage('회원가입에 실패했습니다.');
       }
@@ -265,31 +266,15 @@ export default function SignupPage({ onBack }) {
       <section
         className="login-phone signup-phone"
         aria-labelledby="signup-title">
-        <div className="login-status" aria-hidden="true">
-          <span>9:41</span>
-          <span>▮▮▮ · ▰</span>
-        </div>
         <header className="signup-header">
           <button
             className="signup-back"
             type="button"
             onClick={onBack}
-            aria-label="로그인 화면으로 돌아가기">
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            aria-label="홈으로 돌아가기">
+            <FiArrowLeft aria-hidden="true" />
+            홈으로
           </button>
-
-          {/* 제목 */}
-          <h1 id="signup-title">회원가입</h1>
         </header>
 
         {/* Form 태그 시작 */}
@@ -390,19 +375,7 @@ export default function SignupPage({ onBack }) {
                       '주소 검색 기능은 준비 중입니다. 주소를 직접 입력해 주세요.',
                     )
                   }>
-                  {/* 돋보기 아이콘 */}
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    aria-hidden="true">
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
+                  <FiSearch aria-hidden="true" />
                 </button>
               </div>
               <div id="signup-address-help">
@@ -465,7 +438,7 @@ export default function SignupPage({ onBack }) {
                     onClick={() =>
                       setMessage(`${label} 내용은 준비 중입니다.`)
                     }>
-                    ›
+                    <FiChevronRight aria-hidden="true" />
                   </button>
                 </div>
               ))}

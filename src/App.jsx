@@ -1,5 +1,6 @@
 // src/App.jsx — 로그인 상태와 화면 전환 및 선택 장소를 관리하는 앱 컴포넌트
 import { useEffect, useState } from 'react';
+import { Navigate, useLocation, useNavigate, useRoutes } from 'react-router';
 import './App.css';
 import {
   addFavoriteMeeting,
@@ -11,6 +12,7 @@ import LoginPage from './pages/auth/LoginPage.jsx';
 import FindIdPage from './pages/auth/FindIdPage.jsx';
 import FindPasswordPage from './pages/auth/FindPasswordPage.jsx';
 import SignupPage from './pages/auth/SignupPage.jsx';
+import PublicHomePage from './pages/home/PublicHomePage.jsx';
 import BottomNavigation from './components/layout/BottomNavigation.jsx';
 import HomePage from './pages/home/HomePage.jsx';
 import CreateMeetingPage from './pages/meetings/CreateMeetingPage.jsx';
@@ -18,7 +20,9 @@ import MeetingDetail from './pages/meetings/MeetingDetail.jsx';
 import MyPage from './pages/MyPage/MyPage.jsx';
 
 export default function App() {
-  const [screen, setScreen] = useState('login');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [screen, setScreen] = useState('home');
   // 로그인 정보는 메모리에 보관하며 새로고침하면 초기화됩니다.
   const [loginInfo, setLoginInfo] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -26,7 +30,7 @@ export default function App() {
   const [detailReturnScreen, setDetailReturnScreen] = useState('home');
   const [favoriteMeetings, setFavoriteMeetings] = useState([]);
   const [favoritesError, setFavoritesError] = useState('');
-  const sharedMeetingId = new URLSearchParams(window.location.search).get('meetingId');
+  const sharedMeetingId = new URLSearchParams(location.search).get('meetingId');
 
   const handleLoginSuccess = async (info) => {
     setLoginInfo(info);
@@ -36,12 +40,14 @@ export default function App() {
         setSelectedMeeting(meeting);
         setDetailReturnScreen('home');
         setScreen('detail');
+        navigate('/app', { replace: true });
         return;
       } catch {
         // 링크의 모임이 삭제되었거나 접근할 수 없으면 홈으로 진입합니다.
       }
     }
     setScreen('home');
+    navigate('/app', { replace: true });
   };
 
   useEffect(() => {
@@ -99,17 +105,68 @@ export default function App() {
     }
   };
 
-  // 로그인 페이지로 돌아가는 함수
-  if (screen === 'findId') {
-    return <FindIdPage onBack={() => setScreen('login')} />;
-  }
+  const routePage = useRoutes([
+    {
+      path: '/',
+      element: (
+        <PublicHomePage
+          isLoggedIn={Boolean(loginInfo)}
+          userName={loginInfo?.name}
+          onLogin={() => navigate({ pathname: '/login', search: location.search })}
+          onSignup={() => navigate({ pathname: '/signup', search: location.search })}
+          onProfile={() => {
+            setScreen('mypage');
+            navigate('/app');
+          }}
+        />
+      ),
+    },
+    {
+      path: '/login',
+      element: (
+        <LoginPage
+          onBack={() => navigate({ pathname: '/', search: location.search })}
+          onLoginSuccess={handleLoginSuccess}
+          onSignup={() => navigate({ pathname: '/signup', search: location.search })}
+          onFindId={() => navigate({ pathname: '/find-id', search: location.search })}
+          onFindPassword={() => navigate({ pathname: '/find-password', search: location.search })}
+        />
+      ),
+    },
+    {
+      path: '/signup',
+      element: (
+        <SignupPage
+          onBack={() => navigate({ pathname: '/', search: location.search })}
+          onSignupSuccess={() =>
+            navigate({ pathname: '/login', search: location.search })
+          }
+        />
+      ),
+    },
+    {
+      path: '/find-id',
+      element: (
+        <FindIdPage
+          onBack={() => navigate({ pathname: '/login', search: location.search })}
+        />
+      ),
+    },
+    {
+      path: '/find-password',
+      element: (
+        <FindPasswordPage
+          onBack={() => navigate({ pathname: '/login', search: location.search })}
+        />
+      ),
+    },
+    { path: '*', element: <Navigate to="/" replace /> },
+  ]);
 
-  if (screen === 'findPassword') {
-    return <FindPasswordPage onBack={() => setScreen('login')} />;
-  }
+  if (location.pathname !== '/app') return routePage;
 
-  if (screen === 'signup') {
-    return <SignupPage onBack={() => setScreen('login')} />;
+  if (!loginInfo) {
+    return <Navigate to="/login" replace />;
   }
 
   if (screen === 'create' && loginInfo) {
@@ -147,7 +204,8 @@ export default function App() {
             setLoginInfo(null);
             setFavoriteMeetings([]);
             setFavoritesError('');
-            setScreen('login');
+            setScreen('home');
+            navigate('/');
           }}
         />
         <BottomNavigation
@@ -199,12 +257,5 @@ export default function App() {
     );
   }
 
-  return (
-    <LoginPage
-      onLoginSuccess={handleLoginSuccess}
-      onSignup={() => setScreen('signup')}
-      onFindId={() => setScreen('findId')}
-      onFindPassword={() => setScreen('findPassword')}
-    />
-  );
+  return <Navigate to="/app" replace />;
 }

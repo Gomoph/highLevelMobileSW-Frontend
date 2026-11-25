@@ -1,10 +1,12 @@
 // src/pages/auth/LoginPage.jsx — 아이디·비밀번호 로그인 및 계정 관련 화면 이동
 
 import { useState } from 'react';
+import { FiArrowLeft } from 'react-icons/fi';
 import LoginInputField from '../../components/auth/LoginInputField.jsx';
 import './Auth.css';
 
 export default function LoginPage({
+  onBack,
   onFindId,
   onFindPassword,
   onSignup,
@@ -76,41 +78,25 @@ export default function LoginPage({
     <main className="login-page">
       {/* 데스크톱에서는 원본처럼 휴대전화 형태로 표시하는 영역입니다. */}
       <section className="login-phone" aria-label="모이자 로그인">
-        <div className="login-status" aria-hidden="true">
-          <span>9:41</span>
-          <span>▮▮▮ · ▰</span>
-        </div>
-        {/* 로고와 서비스 이름을 묶는 영역입니다. */}
-        <header className="login-brand">
-          {/* 원본에 있는 회색 점선 로고 영역을 재현합니다. */}
-          <div className="login-logo" aria-hidden="true">
-            {/* 로고 아이콘 */}
-            {/* 별도 이미지 없이 위치 핀 아이콘을 그립니다. */}
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#555"
-              strokeWidth="2"
-              strokeLinecap="round">
-              {/* 핀의 외곽선입니다. */}
-              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z" />
-              {/* 핀 가운데의 작은 원입니다. */}
-              <circle cx="12" cy="10" r="3" />
-            </svg>{' '}
-            {/* 위치 아이콘을 마칩니다. */}
-          </div>{' '}
-          {/* 서비스 이름을 페이지 제목으로 표시합니다. */}
-          <h1>모이자</h1>
-        </header>{' '}
+        <button
+          className="login-back"
+          type="button"
+          onClick={onBack}
+          aria-label="홈으로 돌아가기">
+          <FiArrowLeft aria-hidden="true" />
+          홈으로
+        </button>
         {/* 입력값을 제출하는 폼이며 입력을 수정하면 이전 안내를 지웁니다. */}
         <form
           className="login-form"
           onSubmit={handleSubmit}
           onChange={() => setMessage('')}>
           {/* 아이디 자동 완성을 지원하는 입력창입니다. */}
-          <LoginInputField name="userId" label="아이디" autoComplete="username" />
+          <LoginInputField
+            name="userId"
+            label="아이디"
+            autoComplete="username"
+          />
           {/* 비밀번호를 가리고 기존 비밀번호 자동 완성을 지원합니다. */}
           <LoginInputField
             name="password"

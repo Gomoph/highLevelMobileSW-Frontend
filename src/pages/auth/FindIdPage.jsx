@@ -1,6 +1,7 @@
 // src/pages/auth/FindIdPage.jsx — 아이디 찾기 폼과 이름·전화번호 입력 검증
 
 import { useState } from 'react';
+import { FiArrowLeft, FiBattery, FiUser, FiWifi } from 'react-icons/fi';
 import './Auth.css';
 import './AccountRecovery.css';
 
@@ -35,7 +36,10 @@ export default function FindIdPage({ onBack }) {
         aria-labelledby="find-id-title">
         <div className="login-status" aria-hidden="true">
           <span>9:41</span>
-          <span>▮▮▮ · ▰</span>
+          <span>
+            <FiWifi />
+            <FiBattery />
+          </span>
         </div>
         <header className="find-id-header">
           {/* 기존 화면으로 돌아가는 버튼 */}
@@ -45,34 +49,14 @@ export default function FindIdPage({ onBack }) {
             onClick={onBack}
             aria-label="로그인 화면으로 돌아가기">
             {/* 왼쪽 화살표 버튼 */}
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <FiArrowLeft aria-hidden="true" />
           </button>
           <h1 id="find-id-title">아이디 찾기</h1>
         </header>
         <div className="find-id-content">
           <div className="find-id-intro">
             <div className="find-id-icon" aria-hidden="true">
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+              <FiUser aria-hidden="true" />
             </div>
             <p>
               가입 시 등록한 이름과 전화번호를

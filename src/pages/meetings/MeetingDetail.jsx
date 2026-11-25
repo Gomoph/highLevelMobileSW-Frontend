@@ -1,50 +1,36 @@
 // 목록에서 선택한 모임을 props로 받아 상세 정보를 표시합니다.
 import { useEffect, useState } from 'react';
 import {
+  FiArrowLeft,
+  FiCalendar,
+  FiClock,
+  FiHeart,
+  FiImage,
+  FiMapPin,
+  FiShare2,
+  FiUsers,
+} from 'react-icons/fi';
+import {
   getMeetingParticipation,
   joinMeeting,
   leaveMeeting,
 } from '../../api/meetings.js';
 import './MeetingDetail.css';
 
+const DETAIL_ICONS = {
+  back: FiArrowLeft,
+  share: FiShare2,
+  heart: FiHeart,
+  pin: FiMapPin,
+  clock: FiClock,
+  people: FiUsers,
+  image: FiImage,
+  calendar: FiCalendar,
+};
+
 function DetailIcon({ name }) {
-  const paths = {
-    back: <path d="m15 18-6-6 6-6" />,
-    share: <><path d="M12 15V3m0 0L7 8m5-5 5 5" /><path d="M5 12v8h14v-8" /></>,
-    heart: (
-      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
-    ),
-    pin: (
-      <>
-        <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
-        <circle cx="12" cy="10" r="2.5" />
-      </>
-    ),
-    clock: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l4 2" />
-      </>
-    ),
-    people: (
-      <>
-        <circle cx="9" cy="7" r="3" />
-        <path d="M2 21v-3a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v3M16 4a3 3 0 0 1 0 6M22 21v-3a5 5 0 0 0-4-4.9" />
-      </>
-    ),
-    image: (
-      <>
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <circle cx="8.5" cy="8.5" r="1.5" />
-        <path d="m21 15-5-5L5 21" />
-      </>
-    ),
-  };
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      {paths[name]}
-    </svg>
-  );
+  const Icon = DETAIL_ICONS[name];
+  return <Icon aria-hidden="true" />;
 }
 
 export default function MeetingDetail({

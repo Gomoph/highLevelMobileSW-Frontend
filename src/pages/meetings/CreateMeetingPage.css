@@ -128,7 +128,7 @@
 .create-text-input:focus,
 .create-place-input:focus-within,
 .create-description-wrap:focus-within {
-  border-color: #666a70;
+  border-color: var(--brand-focus);
 }
 .create-text-input::placeholder,
 .create-place-input input::placeholder,
@@ -156,9 +156,9 @@
   cursor: pointer;
 }
 .create-categories button.selected {
-  border-color: #282a2d;
-  color: #fff;
-  background: #282a2d;
+  border-color: var(--brand-border);
+  color: var(--brand-ink);
+  background: var(--brand-soft);
 }
 .create-description-wrap {
   position: relative;
@@ -395,6 +395,10 @@
   line-height: 1;
   cursor: pointer;
 }
+.create-count-buttons button svg {
+  width: 16px;
+  height: 16px;
+}
 .create-count-buttons > strong {
   min-width: 18px;
   color: #292b2e;
@@ -450,9 +454,13 @@
 }
 .create-submit {
   flex: 1;
-  border: 1px solid #222427;
-  color: #fff;
-  background: #222427;
+  border: 1px solid var(--brand-primary);
+  color: var(--brand-ink);
+  background: var(--brand-primary);
+}
+.create-submit:hover:not(:disabled) {
+  border-color: var(--brand-hover);
+  background: var(--brand-hover);
 }
 .create-submit:disabled {
   opacity: 0.6;
@@ -461,7 +469,7 @@
 .create-page button:focus-visible,
 .create-page input:focus-visible,
 .create-page textarea:focus-visible {
-  outline: 2px solid #777b81;
+  outline: 2px solid var(--brand-focus);
   outline-offset: 2px;
 }
 

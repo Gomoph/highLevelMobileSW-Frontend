@@ -21,7 +21,8 @@
 .map-search-button {
   padding: 12px 20px;
   font-size: 15px;
-  background-color: #fee500;
+  background-color: var(--brand-primary);
+  color: var(--brand-ink);
   border: none;
   border-radius: 8px;
   font-weight: bold;
@@ -36,37 +37,37 @@
 
 .map-area-search-button {
   position: absolute;
-  top: 16px;
+  top: 14px;
   left: 50%;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 44px;
+  gap: 7px;
+  min-height: 40px;
   max-width: calc(100% - 24px);
-  padding: 10px 18px;
+  padding: 8px 15px;
   transform: translateX(-50%);
-  border: 1px solid #fff;
+  border: 1px solid rgb(36 37 31 / 8%);
   border-radius: 999px;
   background: #fff;
-  color: #69a7ff;
+  color: var(--brand-ink);
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
-  box-shadow: 0 2px 8px #0003;
+  box-shadow: 0 2px 8px #0002;
   cursor: pointer;
 }
 
 .map-area-search-button:focus-visible {
-  outline: 3px solid #69a7ff;
+  outline: 3px solid var(--brand-focus);
   outline-offset: 3px;
 }
 
 .map-area-search-button svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 

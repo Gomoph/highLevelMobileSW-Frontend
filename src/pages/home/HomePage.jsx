@@ -1,5 +1,14 @@
 // src/pages/home/HomePage.jsx — 지도 범위·카테고리별 모임 조회와 모임 목록 표시
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  FiBell,
+  FiChevronDown,
+  FiChevronRight,
+  FiClock,
+  FiImage,
+  FiMapPin,
+  FiPlus,
+} from 'react-icons/fi';
 import { getMeetings } from '../../api/meetings.js';
 import MeetingMap from '../../components/map/MeetingMap.jsx';
 import FavoritesSheet from '../favorites/FavoritesSheet.jsx';
@@ -36,12 +45,7 @@ function isMeetingVisibleOnHome(meeting, today) {
 }
 
 function PinIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M20 10c0 5.5-8 12-8 12S4 15.5 4 10a8 8 0 1 1 16 0Z" />
-      <circle cx="12" cy="10" r="2.5" />
-    </svg>
-  );
+  return <FiMapPin aria-hidden="true" />;
 }
 
 function MeetingCard({ meeting, selected, onSelect }) {
@@ -61,11 +65,7 @@ function MeetingCard({ meeting, selected, onSelect }) {
       className={`home-meeting-card${selected ? ' is-selected' : ''}`}
       onClick={onSelect}>
       <span className="home-meeting-image" aria-hidden="true">
-        <svg viewBox="0 0 48 48">
-          <rect x="7" y="7" width="34" height="34" rx="5" />
-          <circle cx="18" cy="18" r="3" />
-          <path d="m9 35 11-11 7 7 5-5 7 9" />
-        </svg>
+        <FiImage aria-hidden="true" />
       </span>
       <span className="home-meeting-info">
         <span className="home-meeting-meta">
@@ -82,17 +82,14 @@ function MeetingCard({ meeting, selected, onSelect }) {
           {placeName}
         </span>
         <span className="home-detail-line">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3 2" />
-          </svg>
+          <FiClock aria-hidden="true" />
           {formattedStartsAt}
         </span>
         <span className="home-meeting-members">
           {meeting.currentMembers != null
             ? `${meeting.currentMembers} / ${meeting.maxMembers}명`
             : `최대 ${meeting.maxMembers ?? '-'}명`}
-          <span>모임 보기 ›</span>
+          <span>모임 보기 <FiChevronRight aria-hidden="true" /></span>
         </span>
       </span>
     </button>
@@ -160,8 +157,6 @@ export default function HomePage({
 
     let isCurrentRequest = true;
     const controller = new AbortController();
-    setMeetingsLoading(true);
-    setMeetingsError('');
 
     getMeetings(token, {
       bounds: searchBounds,
@@ -274,19 +269,17 @@ export default function HomePage({
               }>
               <PinIcon />
               {address}
-              <span className="home-chevron">⌄</span>
+              <FiChevronDown className="home-chevron" aria-hidden="true" />
             </button>
           </div>
           <div className="home-header-actions">
             <button aria-label="새 모임 만들기" onClick={onCreateTap}>
-              <span>＋</span>
+              <FiPlus aria-hidden="true" />
             </button>
             <button
               aria-label="알림"
               onClick={() => setNotice('아직 새로운 알림이 없어요.')}>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
-              </svg>
+              <FiBell aria-hidden="true" />
               <i />
             </button>
           </div>

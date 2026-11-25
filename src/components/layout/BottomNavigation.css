@@ -45,12 +45,12 @@
   stroke-linejoin: round;
 }
 
-.glass-dock-item-active { color: #17191c; }
+.glass-dock-item-active { color: #8e7a34; }
 .glass-dock-item-active svg { stroke-width: 2; }
 .glass-dock-label,
 .glass-dock-label-active { font-size: 10px; line-height: 1; }
 .glass-dock-label { color: #92969c; font-weight: 500; }
-.glass-dock-label-active { color: #202226; font-weight: 700; }
+.glass-dock-label-active { color: var(--brand-ink); font-weight: 700; }
 .glass-dock-item:focus-visible { outline: 2px solid #41454b; outline-offset: -2px; }
 
 .footer-toast {

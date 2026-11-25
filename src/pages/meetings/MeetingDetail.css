@@ -183,15 +183,15 @@
   padding: 14px;
   border: 0;
   border-radius: 5px;
-  color: #fff;
-  background: #111827;
+  color: var(--brand-ink);
+  background: var(--brand-primary);
   font: inherit;
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
 }
 .meeting-detail-actions > button:hover {
-  background: #253047;
+  background: var(--brand-hover);
 }
 .meeting-detail-actions > button:disabled {
   color: #7f8795;
@@ -207,7 +207,7 @@
   text-align: center;
 }
 .meeting-detail-page button:focus-visible {
-  outline: 2px solid #6377a1;
+  outline: 2px solid var(--brand-focus);
   outline-offset: 4px;
 }
 .meeting-detail-empty {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { FiMapPin, FiRefreshCw, FiTarget } from 'react-icons/fi';
 import './MeetingMap.css';
 
 export default function MeetingMap({
@@ -269,24 +270,12 @@ export default function MeetingMap({
           disabled={!map || searching}
           aria-busy={searching}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M20 7v5h-5M20 12a8 8 0 1 1-2.34-5.66L20 9"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <FiRefreshCw aria-hidden="true" />
 
           <span>
             {searching
               ? '검색 중…'
-              : '현 지도에서 검색'}
+              : '이 지도에서 검색'}
           </span>
         </button>
       </div>
@@ -295,7 +284,7 @@ export default function MeetingMap({
       {/* 선택된 장소 정보 */}
       {selectedPlace && (
         <div className="map-selection-info">
-          🎯 <strong>선택된 위치:</strong>{' '}
+          <FiTarget aria-hidden="true" /> <strong>선택된 위치:</strong>{' '}
           {selectedPlace.place_name} (
           {selectedPlace.road_address_name ||
             selectedPlace.address_name})
@@ -304,7 +293,7 @@ export default function MeetingMap({
 
       {selectedAddress && (
         <div className="map-selection-info">
-          📍 <strong>선택한 주소:</strong>{' '}
+          <FiMapPin aria-hidden="true" /> <strong>선택한 주소:</strong>{' '}
           {selectedAddress}
         </div>
       )}

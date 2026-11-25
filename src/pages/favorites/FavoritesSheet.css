@@ -142,9 +142,9 @@
 }
 
 .favorites-filter-button.is-active {
-  border-color: #303640;
-  color: #fff;
-  background: #303640;
+  border-color: var(--brand-border);
+  color: var(--brand-ink);
+  background: var(--brand-soft);
 }
 
 .favorites-filter-button svg {
@@ -184,8 +184,8 @@
 
 .favorites-sort-menu button.is-active,
 .favorites-sort-menu button:hover {
-  color: #30343a;
-  background: #f3f4f6;
+  color: var(--brand-ink);
+  background: var(--brand-soft);
   font-weight: 700;
 }
 
@@ -213,9 +213,9 @@
 }
 
 .favorites-category-list button.is-active {
-  border-color: #252a32;
-  color: #fff;
-  background: #252a32;
+  border-color: var(--brand-border);
+  color: var(--brand-ink);
+  background: var(--brand-soft);
 }
 
 .favorites-sheet-list {

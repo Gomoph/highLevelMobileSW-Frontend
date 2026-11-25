@@ -1,27 +1,33 @@
 import { useMemo, useState } from 'react';
+import {
+  FiCalendar,
+  FiChevronDown,
+  FiFilter,
+  FiHeart,
+  FiImage,
+  FiMapPin,
+  FiUsers,
+} from 'react-icons/fi';
 import './FavoritesSheet.css';
 
 const CATEGORIES = ['전체', '운동', '카페', '맛집', '전시', '보드게임', '스터디', '기타'];
 
 function HeartIcon({ filled = false }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={filled ? 'is-filled' : ''}>
-      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1 7.8 7.7 7.8-7.7 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
-    </svg>
-  );
+  return <FiHeart aria-hidden="true" className={filled ? 'is-filled' : ''} />;
 }
 
-function CardIcon({ name }) {
-  const paths = {
-    image: <><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></>,
-    calendar: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
-    pin: <><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
-    people: <><circle cx="9" cy="8" r="3" /><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M16 5a3 3 0 0 1 0 6M18 14a4 4 0 0 1 4 4v3" /></>,
-    down: <path d="m6 9 6 6 6-6" />,
-    filter: <><path d="M4 6h16M7 12h10M10 18h4" /><circle cx="8" cy="6" r="1" /><circle cx="15" cy="12" r="1" /></>,
-  };
+const CARD_ICONS = {
+  image: FiImage,
+  calendar: FiCalendar,
+  pin: FiMapPin,
+  people: FiUsers,
+  down: FiChevronDown,
+  filter: FiFilter,
+};
 
-  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
+function CardIcon({ name }) {
+  const Icon = CARD_ICONS[name];
+  return <Icon aria-hidden="true" />;
 }
 
 function FavoriteMeetingCard({ meeting, onSelect, onRemove }) {

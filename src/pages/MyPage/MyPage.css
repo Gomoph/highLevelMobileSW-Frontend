@@ -82,7 +82,7 @@
   bottom: -1px;
   left: 32px;
   height: 2px;
-  background: #242629;
+  background: var(--brand-primary);
   content: '';
 }
 
@@ -417,7 +417,7 @@
   bottom: -1px;
   left: 18px;
   height: 2px;
-  background: #242629;
+  background: var(--brand-primary);
   content: '';
 }
 
@@ -722,11 +722,14 @@
   margin-top: 18px;
   border: 0;
   border-radius: 5px;
-  color: #fff;
-  background: #25272a;
+  color: var(--brand-ink);
+  background: var(--brand-primary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+}
+.mypage-primary-button:hover {
+  background: var(--brand-hover);
 }
 
 .mypage-local-save-note {

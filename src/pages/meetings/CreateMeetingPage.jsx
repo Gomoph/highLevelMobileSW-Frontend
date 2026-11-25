@@ -1,5 +1,19 @@
 // src/pages/meetings/CreateMeetingPage.jsx — 모임 정보와 장소 입력 및 모임 등록 요청 처리
 import { useEffect, useRef, useState } from 'react';
+import {
+  FiAlignLeft,
+  FiArrowLeft,
+  FiCalendar,
+  FiClock,
+  FiImage,
+  FiMapPin,
+  FiMinus,
+  FiPlus,
+  FiSearch,
+  FiTag,
+  FiUpload,
+  FiUsers,
+} from 'react-icons/fi';
 import './CreateMeetingPage.css';
 import { createMeeting } from '../../api/meetings.js';
 
@@ -14,76 +28,26 @@ const CATEGORIES = [
   '기타',
 ];
 
+const CREATE_ICONS = {
+  back: FiArrowLeft,
+  text: FiAlignLeft,
+  tag: FiTag,
+  image: FiImage,
+  upload: FiUpload,
+  pin: FiMapPin,
+  search: FiSearch,
+  calendar: FiCalendar,
+  clock: FiClock,
+  people: FiUsers,
+};
+
 function Icon({ name }) {
-  const paths = {
-    back: (
-      <>
-        <path d="m15 18-6-6 6-6" />
-      </>
-    ),
-    text: (
-      <>
-        <path d="M4 6h16M4 12h16M4 18h10" />
-      </>
-    ),
-    tag: (
-      <>
-        <path d="m20 13-7 7-11-11V2h7l11 11Z" />
-        <circle cx="6.5" cy="6.5" r=".7" />
-      </>
-    ),
-    image: (
-      <>
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <circle cx="8.5" cy="8.5" r="1.5" />
-        <path d="m21 15-5-5L5 21" />
-      </>
-    ),
-    upload: (
-      <>
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <path d="m17 8-5-5-5 5M12 3v12" />
-      </>
-    ),
-    pin: (
-      <>
-        <path d="M20 10c0 5.5-8 12-8 12S4 15.5 4 10a8 8 0 1 1 16 0Z" />
-        <circle cx="12" cy="10" r="2.5" />
-      </>
-    ),
-    search: (
-      <>
-        <circle cx="10.8" cy="10.8" r="6.8" />
-        <path d="m16 16 5 5" />
-      </>
-    ),
-    calendar: (
-      <>
-        <rect x="3" y="4" width="18" height="17" rx="2" />
-        <path d="M16 2v4M8 2v4M3 10h18" />
-      </>
-    ),
-    clock: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </>
-    ),
-    people: (
-      <>
-        <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="10" cy="7" r="4" />
-        <path d="M20 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" />
-      </>
-    ),
-  };
+  const IconComponent = CREATE_ICONS[name];
   return (
-    <svg
+    <IconComponent
       className={`create-icon create-icon-${name}`}
-      viewBox="0 0 24 24"
-      aria-hidden="true">
-      {paths[name]}
-    </svg>
+      aria-hidden="true"
+    />
   );
 }
 
@@ -443,7 +407,7 @@ export default function CreateMeetingPage({
                 type="button"
                 aria-label="모집 인원 줄이기"
                 onClick={() => setCount((current) => Math.max(2, current - 1))}>
-                −
+                <FiMinus aria-hidden="true" />
               </button>
               <strong>{count}</strong>
               <button
@@ -452,7 +416,7 @@ export default function CreateMeetingPage({
                 onClick={() =>
                   setCount((current) => Math.min(50, current + 1))
                 }>
-                ＋
+                <FiPlus aria-hidden="true" />
               </button>
             </div>
           </div>

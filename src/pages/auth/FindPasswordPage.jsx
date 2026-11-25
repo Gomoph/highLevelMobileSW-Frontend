@@ -1,6 +1,7 @@
 // src/pages/auth/FindPasswordPage.jsx — 비밀번호 찾기 폼과 계정·본인 정보 입력 검증
 
 import { useState } from 'react';
+import { FiArrowLeft, FiBattery, FiLock, FiWifi } from 'react-icons/fi';
 import './Auth.css';
 import './AccountRecovery.css';
 
@@ -40,7 +41,10 @@ export default function FindPasswordPage({ onBack }) {
         aria-labelledby="find-password-title">
         <div className="login-status" aria-hidden="true">
           <span>9:41</span>
-          <span>▮▮▮ · ▰</span>
+          <span>
+            <FiWifi />
+            <FiBattery />
+          </span>
         </div>
         <header className="find-id-header">
           <button
@@ -48,34 +52,14 @@ export default function FindPasswordPage({ onBack }) {
             type="button"
             onClick={onBack}
             aria-label="로그인 화면으로 돌아가기">
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <FiArrowLeft aria-hidden="true" />
           </button>
           <h1 id="find-password-title">비밀번호 찾기</h1>
         </header>
         <div className="find-id-content">
           <div className="find-id-intro">
             <div className="find-id-icon" aria-hidden="true">
-              <svg
-                width="26"
-                height="26"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
+              <FiLock aria-hidden="true" />
             </div>
             <p>
               가입 시 등록한 정보를 입력하면
