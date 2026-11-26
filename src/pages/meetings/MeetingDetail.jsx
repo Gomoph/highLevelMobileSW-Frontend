@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fi';
 import {
   getMeetingImageUrl,
+  confirmMeeting,
   getMeetingById,
   getMeetingParticipation,
   joinMeeting,
@@ -44,6 +45,10 @@ export default function MeetingDetail({
   onMeetingUpdate,
 }) {
   const [notice, setNotice] = useState('');
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [announcementModalOpen, setAnnouncementModalOpen] = useState(false);
+  const [announcementDraft, setAnnouncementDraft] = useState('');
+  const [confirmationSubmitting, setConfirmationSubmitting] = useState(false);
   const [participationLoading, setParticipationLoading] = useState(true);
   const [participationSubmitting, setParticipationSubmitting] = useState(false);
   const [participation, setParticipation] = useState({
@@ -51,20 +56,24 @@ export default function MeetingDetail({
     host: false,
     full: false,
     canJoin: true,
+    confirmed: meeting?.confirmed ?? false,
+    announcement: meeting?.announcement ?? '',
     currentMembers: meeting?.currentMembers ?? 0,
     maxMembers: meeting?.maxMembers ?? 0,
   });
   const participationButtonLabel = participationLoading
-    ? '참여 정보 확인 중…'
-    : participationSubmitting
-      ? '처리 중…'
+    ? '참가 상태 확인 중'
+    : participationSubmitting || confirmationSubmitting
+      ? '처리 중'
       : participation.host
-        ? '내가 만든 모임'
+        ? participation.confirmed ? '공지 확인' : '모임 확정'
         : participation.joined
-          ? '참여 취소하기'
-          : participation.full
-            ? '모집 마감'
+          ? '참가 취소'
+          : participation.confirmed || participation.full
+            ? '참가 마감'
             : '신청하기';
+  const showConfirmedParticipantActions =
+    participation.confirmed && participation.joined && !participation.host;
   const startsAt = meeting?.startsAt ?? meeting?.date;
   const distance = Number(meeting?.distance);
   const hasDistance = meeting?.distance != null && Number.isFinite(distance);
@@ -97,38 +106,46 @@ export default function MeetingDetail({
 
   const handleParticipation = async () => {
     if (!meeting?.id || !token || participationSubmitting) return;
-
+    if (!participation.joined && (participation.host || participation.full || participation.confirmed)) return;
     setParticipationSubmitting(true);
     try {
-      const result = participation.joined
-        ? await leaveMeeting(token, meeting.id)
-        : await joinMeeting(token, meeting.id);
+      const result = participation.joined ? await leaveMeeting(token, meeting.id) : await joinMeeting(token, meeting.id);
       let updatedParticipation = result;
       try {
         const latestMeeting = await getMeetingById(meeting.id);
-        updatedParticipation = {
-          ...result,
-          currentMembers: latestMeeting.currentMembers ?? result.currentMembers,
-          maxMembers: latestMeeting.maxMembers ?? result.maxMembers,
-        };
-      } catch {
-        // 참여 처리는 완료됐으므로 최신 상세 조회가 실패하면 변경 응답을 사용합니다.
-      }
-      setParticipation(updatedParticipation);
-      onMeetingUpdate?.(meeting.id, {
-        currentMembers: updatedParticipation.currentMembers,
-        maxMembers: updatedParticipation.maxMembers,
-      });
-      setNotice(
-        updatedParticipation.joined ? '모임 참여가 완료되었어요.' : '모임 참여를 취소했어요.',
-      );
+        updatedParticipation = { ...result, currentMembers: latestMeeting.currentMembers ?? result.currentMembers, maxMembers: latestMeeting.maxMembers ?? result.maxMembers, confirmed: latestMeeting.confirmed ?? result.confirmed, announcement: latestMeeting.announcement ?? result.announcement };
+      } catch { /* Keep the participation response if refreshing the meeting fails. */ }
+      setParticipation((current) => ({ ...current, ...updatedParticipation }));
+      onMeetingUpdate?.(meeting.id, { currentMembers: updatedParticipation.currentMembers, maxMembers: updatedParticipation.maxMembers, confirmed: updatedParticipation.confirmed, announcement: updatedParticipation.announcement });
+      setNotice(updatedParticipation.joined ? '참가 신청이 완료됐어요.' : '참가 신청을 취소했어요.');
     } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : '모임 참여 처리에 실패했어요.',
-      );
-    } finally {
-      setParticipationSubmitting(false);
+      setNotice(error instanceof Error ? error.message : '참가 요청을 처리하지 못했어요.');
+    } finally { setParticipationSubmitting(false); }
+  };
+
+  const handlePrimaryAction = () => {
+    if (participation.host) {
+      if (participation.confirmed) setAnnouncementModalOpen(true);
+      else { setAnnouncementDraft(''); setConfirmModalOpen(true); }
+      return;
     }
+    if (participation.confirmed && participation.joined) setAnnouncementModalOpen(true);
+    else handleParticipation();
+  };
+
+  const handleConfirmMeeting = async (event) => {
+    event.preventDefault();
+    if (!meeting?.id || !token || !announcementDraft.trim() || confirmationSubmitting) return;
+    setConfirmationSubmitting(true);
+    try {
+      const result = await confirmMeeting(token, meeting.id, announcementDraft.trim());
+      const updates = { confirmed: true, announcement: result.announcement ?? announcementDraft.trim() };
+      setParticipation((current) => ({ ...current, ...updates }));
+      onMeetingUpdate?.(meeting.id, updates);
+      setConfirmModalOpen(false);
+      setNotice('모임이 확정되고 공지가 등록됐어요.');
+    } catch (error) { setNotice(error instanceof Error ? error.message : '모임 확정에 실패했어요.'); }
+    finally { setConfirmationSubmitting(false); }
   };
 
   const shareMeeting = async () => {
@@ -212,7 +229,7 @@ export default function MeetingDetail({
               <div className="meeting-detail-meta">
                 <span>{meeting.category ?? '카테고리 미정'}</span>
                 <span className="meeting-detail-status">
-                  {meeting.status ?? '모집중'}
+                  {participation.confirmed ? '참가 마감' : meeting.status ?? '모집 중'}
                 </span>
               </div>
               <h2>{meeting.title}</h2>
@@ -264,22 +281,40 @@ export default function MeetingDetail({
             </div>
           </main>
           <footer className="meeting-detail-actions">
-            <button
-              type="button"
-              disabled={
-                participationLoading ||
-                participationSubmitting ||
-                ((participation.host || participation.full) &&
-                  !participation.joined)
-              }
-              onClick={handleParticipation}>
-              {participationButtonLabel}
-            </button>
-            <p role="status">
-              {notice ||
-                `${participation.currentMembers ?? meeting.currentMembers ?? 0} / ${participation.maxMembers || meeting.maxMembers || '-'}명 참여 중`}
-            </p>
+            {showConfirmedParticipantActions ? (
+              <div className="meeting-detail-actions-split">
+                <button type="button" className="announcement-button" onClick={() => setAnnouncementModalOpen(true)}>공지 확인</button>
+                <button type="button" className="cancel-button" disabled={participationSubmitting} onClick={handleParticipation}>취소</button>
+              </div>
+            ) : (
+              <button type="button" disabled={participationLoading || participationSubmitting || confirmationSubmitting || (!participation.host && !participation.joined && (participation.full || participation.confirmed))} onClick={handlePrimaryAction}>{participationButtonLabel}</button>
+            )}
+            <p role="status">{notice || `${participation.currentMembers ?? meeting.currentMembers ?? 0} / ${participation.maxMembers || meeting.maxMembers || '-'}명 참여 중`}</p>
           </footer>
+          {confirmModalOpen && (
+            <div className="meeting-modal-backdrop" onClick={() => !confirmationSubmitting && setConfirmModalOpen(false)}>
+              <section className="meeting-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-meeting-title" onClick={(event) => event.stopPropagation()}>
+                <h2 id="confirm-meeting-title">모임 확정 및 공지 작성</h2>
+                <p>확정하면 새 참가 신청이 마감돼요. 참가 중인 사용자는 취소할 수 있어요.</p>
+                <form onSubmit={handleConfirmMeeting}>
+                  <textarea value={announcementDraft} onChange={(event) => setAnnouncementDraft(event.target.value)} maxLength={1000} placeholder="참가자에게 전달할 공지를 작성해 주세요." required />
+                  <div className="meeting-modal-actions">
+                    <button type="button" className="meeting-modal-secondary" disabled={confirmationSubmitting} onClick={() => setConfirmModalOpen(false)}>취소</button>
+                    <button type="submit" className="meeting-modal-primary" disabled={!announcementDraft.trim() || confirmationSubmitting}>{confirmationSubmitting ? '저장 중' : '확정하고 공지 저장'}</button>
+                  </div>
+                </form>
+              </section>
+            </div>
+          )}
+          {announcementModalOpen && (
+            <div className="meeting-modal-backdrop" onClick={() => setAnnouncementModalOpen(false)}>
+              <section className="meeting-modal announcement-modal" role="dialog" aria-modal="true" aria-labelledby="meeting-announcement-title" onClick={(event) => event.stopPropagation()}>
+                <h2 id="meeting-announcement-title">모임 공지</h2>
+                <p className="meeting-announcement-text">{participation.announcement || meeting.announcement || '등록된 공지가 없습니다.'}</p>
+                <div className="meeting-modal-actions"><button type="button" className="meeting-modal-primary" onClick={() => setAnnouncementModalOpen(false)}>닫기</button></div>
+              </section>
+            </div>
+          )}
         </>
       )}
     </div>

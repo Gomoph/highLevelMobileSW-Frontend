@@ -131,6 +131,12 @@ function PinIcon() {
 }
 
 function MeetingCard({ meeting, selected, onSelect }) {
+  const isMeetingClosed =
+    meeting.confirmed === true ||
+    (meeting.currentMembers != null &&
+      meeting.maxMembers != null &&
+      Number.isFinite(Number(meeting.currentMembers)) &&
+      Number(meeting.currentMembers) >= Number(meeting.maxMembers));
   const placeName = meeting.placeName ?? meeting.place ?? '장소 미정';
   const startsAt = meeting.startsAt ?? meeting.date;
   const formattedStartsAt = startsAt
@@ -153,7 +159,7 @@ function MeetingCard({ meeting, selected, onSelect }) {
         <span className="home-meeting-meta">
           <span>{meeting.category}</span>
           <i>·</i>
-          <b>모집중</b>
+          <b>{isMeetingClosed ? '참가 마감' : '모집중'}</b>
           {hasDistance && (
             <span className="home-distance">{distance.toFixed(1)}km</span>
           )}

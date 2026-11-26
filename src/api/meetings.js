@@ -94,6 +94,15 @@ export async function getMeetingById(meetingId) {
   return response.json();
 }
 
+export async function confirmMeeting(token, meetingId, announcement) {
+  const response = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}/confirm`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ announcement }),
+  });
+  const result = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(result?.message || result?.detail || `모임 확정에 실패했어요. (${response.status})`);
+  return result;
+}
 async function requestParticipation(token, meetingId, method = 'GET') {
   const response = await fetch(
     `${API_BASE_URL}/api/meetings/${meetingId}/participation`,
