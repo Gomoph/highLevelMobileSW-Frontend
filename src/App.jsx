@@ -132,16 +132,16 @@ export default function App() {
         setFavoriteMeetings((current) => current.filter((saved) => saved.id !== meeting.id));
       } else {
         await addFavoriteMeeting(token, meeting.id);
-        setFavoriteMeetings((current) => current.some((saved) => saved.id === meeting.id)
-          ? current
-          : [meeting, ...current]);
-        // 찜 카드에 전달한 오래된 모임 객체 대신 서버의 최신 인원 수를 반영합니다.
+        // 상세 화면 객체가 오래됐을 수 있으므로 참여 인원은 모임 상세 API에서 다시 읽습니다.
+        let latestMeeting = meeting;
         try {
-          const meetings = await getFavoriteMeetings(token);
-          setFavoriteMeetings(Array.isArray(meetings) ? meetings : []);
+          latestMeeting = { ...meeting, ...await getMeetingById(meeting.id) };
         } catch {
-            // 찜 저장은 완료됐으므로 조회가 실패하면 낙관적 상태를 유지합니다.
+          // 찜 저장은 완료됐으므로 상세 조회가 실패하면 전달받은 모임 정보를 사용합니다.
         }
+        setFavoriteMeetings((current) => current.some((saved) => saved.id === meeting.id)
+          ? current.map((saved) => saved.id === meeting.id ? latestMeeting : saved)
+          : [latestMeeting, ...current]);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : '찜 상태를 저장하지 못했어요.';

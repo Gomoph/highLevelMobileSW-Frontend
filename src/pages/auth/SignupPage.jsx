@@ -5,6 +5,8 @@ import { FiArrowLeft, FiChevronRight, FiSearch } from 'react-icons/fi';
 import './Auth.css';
 import './SignupPage.css';
 
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
 // input 칸을 map()을 활용하여 동적으로 생성하기 위한 객체 배열
 const fields = [
   {
@@ -241,7 +243,7 @@ export default function SignupPage({ onBack, onSignupSuccess = onBack }) {
       return;
     }
     try {
-      const response = await fetch('http://localhost:8080/api/signup', {
+      const response = await fetch(`http://localhost:8080/api/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

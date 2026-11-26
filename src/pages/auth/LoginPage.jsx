@@ -5,6 +5,8 @@ import { FiArrowLeft } from 'react-icons/fi';
 import LoginInputField from '../../components/auth/LoginInputField.jsx';
 import './Auth.css';
 
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
 export default function LoginPage({
   onBack,
   onFindId,
@@ -42,7 +44,8 @@ export default function LoginPage({
 
     try {
       // 아이디와 비밀번호를 JSON 요청 본문으로 전송
-      const response = await fetch('http://localhost:8080/api/login', {
+      // ${API_BASE_URL} ngrok 사용시 변경
+      const response = await fetch(`http://localhost:8080/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, password }),
