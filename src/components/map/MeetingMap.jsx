@@ -55,7 +55,9 @@ const DEFAULT_CENTER = Object.freeze({
 export default function MeetingMap({
   meetings = [],
   center = DEFAULT_CENTER,
+  initialLevel = 3,
   favoriteMeetingIds = [],
+  onViewportChange,
   onLocationSelect,
   onSearchArea,
   onMeetingSelect,
@@ -72,6 +74,7 @@ export default function MeetingMap({
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
   const centerRef = useRef(center);
+  const lastAppliedCenterRef = useRef(null);
   // 마지막으로 검색한 모임 키워드 ("이 지도에서 검색" 버튼이 같은 키워드를 유지)
   const appliedKeywordRef = useRef('');
 
@@ -81,15 +84,17 @@ export default function MeetingMap({
   const [selectedAddress, setSelectedAddress] = useState('');
 
   // 최신 콜백을 보관하여 지도 재생성 방지
+  const onViewportChangeRef = useRef(onViewportChange);
   const onLocationSelectRef = useRef(onLocationSelect);
   const onSearchAreaRef = useRef(onSearchArea);
   const onMeetingSelectRef = useRef(onMeetingSelect);
 
   useEffect(() => {
+    onViewportChangeRef.current = onViewportChange;
     onLocationSelectRef.current = onLocationSelect;
     onSearchAreaRef.current = onSearchArea;
     onMeetingSelectRef.current = onMeetingSelect;
-  }, [onLocationSelect, onSearchArea, onMeetingSelect]);
+  }, [onViewportChange, onLocationSelect, onSearchArea, onMeetingSelect]);
 
   useEffect(() => {
     centerRef.current = center;
@@ -113,11 +118,15 @@ export default function MeetingMap({
           centerRef.current.latitude,
           centerRef.current.longitude,
         ),
-        level: 3,
+        level: Number.isFinite(Number(initialLevel)) ? Number(initialLevel) : 3,
       };
 
       mapInstance = new window.kakao.maps.Map(mapContainerRef.current, options);
       mapRef.current = mapInstance;
+      lastAppliedCenterRef.current = {
+        latitude: centerRef.current.latitude,
+        longitude: centerRef.current.longitude,
+      };
       setMap(mapInstance);
 
       // 초기 진입 때 현재 지도 영역의 모임을 한 번 조회합니다.
@@ -150,10 +159,24 @@ export default function MeetingMap({
   // 주소를 선택하면 지도를 이동하고, 이동한 범위의 모임도 다시 조회합니다.
   useEffect(() => {
     if (!map || !center) return;
+
+    const latitude = Number(center.latitude);
+    const longitude = Number(center.longitude);
+    const lastAppliedCenter = lastAppliedCenterRef.current;
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      (lastAppliedCenter?.latitude === latitude &&
+        lastAppliedCenter?.longitude === longitude)
+    ) {
+      return;
+    }
+
+    lastAppliedCenterRef.current = { latitude, longitude };
     appliedKeywordRef.current = '';
     map.setLevel(3);
     map.setCenter(
-      new window.kakao.maps.LatLng(center.latitude, center.longitude),
+      new window.kakao.maps.LatLng(latitude, longitude),
     );
     const handleMapIdle = () => {
       window.kakao.maps.event.removeListener(map, 'idle', handleMapIdle);
@@ -170,6 +193,24 @@ export default function MeetingMap({
     window.kakao.maps.event.addListener(map, 'idle', handleMapIdle);
   }, [map, center]);
 
+
+  useEffect(() => {
+    if (!map) return undefined;
+
+    const handleViewportIdle = () => {
+      const mapCenter = map.getCenter();
+      onViewportChangeRef.current?.({
+        latitude: mapCenter.getLat(),
+        longitude: mapCenter.getLng(),
+        level: map.getLevel(),
+      });
+    };
+
+    window.kakao.maps.event.addListener(map, 'idle', handleViewportIdle);
+    return () => {
+      window.kakao.maps.event.removeListener(map, 'idle', handleViewportIdle);
+    };
+  }, [map]);
   // 2. 지도 범위에 있는 모임의 마커를 생성합니다.
   // 찜에 포함된 모임만 빨간색이고, 그 외에는 파란색입니다.
   useEffect(() => {

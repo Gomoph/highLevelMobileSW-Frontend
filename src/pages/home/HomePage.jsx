@@ -67,6 +67,47 @@ function storeMapLocation(token, location) {
 
 // 모임 날짜의 다음 날 00:00부터 홈 지도와 목록에서만 숨깁니다.
 // 서버 데이터는 삭제하지 않으므로 마이페이지의 모임 기록은 유지됩니다.
+function getMapViewportStorageKey(token) {
+  return `gomoph.mapViewport.${token}`;
+}
+
+function readStoredMapViewport(token) {
+  if (!token) return null;
+  try {
+    const stored = sessionStorage.getItem(getMapViewportStorageKey(token));
+    const viewport = stored ? JSON.parse(stored) : null;
+    if (
+      !Number.isFinite(Number(viewport?.latitude)) ||
+      !Number.isFinite(Number(viewport?.longitude))
+    ) {
+      return null;
+    }
+    const level = Number(viewport.level);
+    return {
+      latitude: Number(viewport.latitude),
+      longitude: Number(viewport.longitude),
+      level: Number.isFinite(level) ? level : 3,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function storeMapViewport(token, viewport) {
+  if (!token) return;
+  try {
+    sessionStorage.setItem(
+      getMapViewportStorageKey(token),
+      JSON.stringify({
+        latitude: viewport.latitude,
+        longitude: viewport.longitude,
+        level: Number.isFinite(Number(viewport.level)) ? Number(viewport.level) : 3,
+      }),
+    );
+  } catch {
+    // Browser storage may be unavailable; the map still works for this visit.
+  }
+}
 function getTodayDateKey() {
   const now = new Date();
   const year = now.getFullYear();
@@ -167,10 +208,18 @@ export default function HomePage({
   const [address, setAddress] = useState(
     () => readStoredMapLocation(token)?.address || '서울시 중랑구 면목동',
   );
-  const [mapCenter, setMapCenter] = useState({
-    latitude: readStoredMapLocation(token)?.latitude ?? 37.581789,
-    longitude: readStoredMapLocation(token)?.longitude ?? 127.010369,
+  const [mapCenter, setMapCenter] = useState(() => {
+    const savedViewport = readStoredMapViewport(token);
+    const savedLocation = readStoredMapLocation(token);
+    return {
+      latitude: savedViewport?.latitude ?? savedLocation?.latitude ?? 37.581789,
+      longitude: savedViewport?.longitude ?? savedLocation?.longitude ?? 127.010369,
+    };
   });
+  const hasStoredViewportRef = useRef(Boolean(readStoredMapViewport(token)));
+  const [mapLevel, setMapLevel] = useState(
+    () => readStoredMapViewport(token)?.level ?? 3,
+  );
   const [addressSearchOpen, setAddressSearchOpen] = useState(false);
   const [addressSaving, setAddressSaving] = useState(false);
   const [notice, setNotice] = useState('');
@@ -200,21 +249,23 @@ export default function HomePage({
         if (savedAddress) {
           setAddress(savedAddress);
         }
-        if (
-          Number.isFinite(Number(profile?.locationLatitude)) &&
-          Number.isFinite(Number(profile?.locationLongitude)) &&
-          profile?.locationLatitude != null &&
-          profile?.locationLongitude != null
-        ) {
-          setMapCenter({
-            latitude: Number(profile.locationLatitude),
-            longitude: Number(profile.locationLongitude),
-          });
-        } else if (cachedLocation) {
-          setMapCenter({
-            latitude: cachedLocation.latitude,
-            longitude: cachedLocation.longitude,
-          });
+        if (!hasStoredViewportRef.current) {
+          if (
+            Number.isFinite(Number(profile?.locationLatitude)) &&
+            Number.isFinite(Number(profile?.locationLongitude)) &&
+            profile?.locationLatitude != null &&
+            profile?.locationLongitude != null
+          ) {
+            setMapCenter({
+              latitude: Number(profile.locationLatitude),
+              longitude: Number(profile.locationLongitude),
+            });
+          } else if (cachedLocation) {
+            setMapCenter({
+              latitude: cachedLocation.latitude,
+              longitude: cachedLocation.longitude,
+            });
+          }
         }
       })
       .catch(() => {
@@ -226,48 +277,55 @@ export default function HomePage({
     };
   }, [token]);
 
-  const handleAddressSelect = useCallback(
-    async (selection) => {
-      if (addressSaving) return;
-      setAddressSaving(true);
-      try {
-        const savedProfile = await updateMyProfile(token, {
-          mapLocationAddress: selection.address,
-          locationLatitude: selection.latitude,
-          locationLongitude: selection.longitude,
-        });
-        const isSavedToDatabase =
-          savedProfile?.mapLocationAddress === selection.address &&
-          Number(savedProfile.locationLatitude) === selection.latitude &&
-          Number(savedProfile.locationLongitude) === selection.longitude;
-        const selectedLocation = {
-          address: selection.address,
-          latitude: selection.latitude,
-          longitude: selection.longitude,
-        };
-        storeMapLocation(token, selectedLocation);
-        setAddress(savedProfile.mapLocationAddress || selection.address);
-        setMapCenter({
-          latitude: selection.latitude,
-          longitude: selection.longitude,
-        });
-        setAddressSearchOpen(false);
-        setNotice(
-          isSavedToDatabase
-            ? '주소와 지도 위치를 저장했어요.'
-            : '이 기기에는 주소를 저장했지만 서버 DB 저장이 확인되지 않았어요. 백엔드를 재시작한 뒤 다시 저장해 주세요.',
-        );
-      } catch (error) {
-        setNotice(
-          error instanceof Error ? error.message : '주소를 저장하지 못했어요.',
-        );
-      } finally {
-        setAddressSaving(false);
-      }
-    },
-    [addressSaving, token],
-  );
+  const handleAddressSelect = useCallback(async (selection) => {
+    if (addressSaving) return;
+    setAddressSaving(true);
+    try {
+      const savedProfile = await updateMyProfile(token, {
+        mapLocationAddress: selection.address,
+        locationLatitude: selection.latitude,
+        locationLongitude: selection.longitude,
+      });
+      const isSavedToDatabase =
+        savedProfile?.mapLocationAddress === selection.address &&
+        Number(savedProfile.locationLatitude) === selection.latitude &&
+        Number(savedProfile.locationLongitude) === selection.longitude;
+      const selectedLocation = {
+        address: selection.address,
+        latitude: selection.latitude,
+        longitude: selection.longitude,
+      };
+      storeMapLocation(token, selectedLocation);
+      hasStoredViewportRef.current = true;
+      storeMapViewport(token, { ...selectedLocation, level: 3 });
+      setMapLevel(3);
+      setAddress(savedProfile.mapLocationAddress || selection.address);
+      setMapCenter({
+        latitude: selection.latitude,
+        longitude: selection.longitude,
+      });
+      setAddressSearchOpen(false);
+      setNotice(
+        isSavedToDatabase
+          ? '주소와 지도 위치를 저장했어요.'
+          : '이 기기에는 주소를 저장했지만 서버 DB 저장이 확인되지 않았어요. 백엔드를 재시작한 뒤 다시 저장해 주세요.',
+      );
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : '주소를 저장하지 못했어요.',
+      );
+    } finally {
+      setAddressSaving(false);
+    }
+  }, [addressSaving, token]);
 
+  const handleViewportChange = useCallback((viewport) => {
+    hasStoredViewportRef.current = true;
+    storeMapViewport(token, viewport);
+    if (Number.isFinite(Number(viewport.level))) {
+      setMapLevel(Number(viewport.level));
+    }
+  }, [token]);
   // 날짜가 바뀌는 자정에 마커와 목록을 다시 필터링합니다.
   useEffect(() => {
     let midnightTimer;
@@ -489,6 +547,8 @@ export default function HomePage({
           <MeetingMap
             meetings={meetings}
             center={mapCenter}
+            onViewportChange={handleViewportChange}
+            initialLevel={mapLevel}
             favoriteMeetingIds={favoriteMeetingIds}
             onLocationSelect={onLocationSelect}
             onSearchArea={handleSearchArea}
