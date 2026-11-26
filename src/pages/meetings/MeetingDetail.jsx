@@ -11,6 +11,7 @@ import {
   FiUsers,
 } from 'react-icons/fi';
 import {
+  getMeetingImageUrl,
   getMeetingById,
   getMeetingParticipation,
   joinMeeting,
@@ -203,12 +204,10 @@ export default function MeetingDetail({
       ) : (
         <>
           <main className="meeting-detail-main">
-            <div
-              className="meeting-detail-cover"
-              aria-label="모임 대표 이미지 준비 중">
-              <DetailIcon name="image" />
-              <span>모임 대표 이미지</span>
+            <div className={`meeting-detail-cover${meeting.imageUrls?.[0] ? ' has-image' : ''}`} aria-label="모임 대표 이미지">
+              {meeting.imageUrls?.[0] ? <img src={getMeetingImageUrl(meeting.imageUrls[0])} alt="모임 대표" /> : <><DetailIcon name="image" /><span>모임 대표 이미지</span></>}
             </div>
+            {meeting.imageUrls?.length > 1 && <div className="meeting-detail-gallery" aria-label="모임 추가 이미지">{meeting.imageUrls.slice(1).map((imageUrl,index)=><img key={imageUrl} src={getMeetingImageUrl(imageUrl)} alt={`모임 사진 ${index+2}`} />)}</div>}
             <div className="meeting-detail-content">
               <div className="meeting-detail-meta">
                 <span>{meeting.category ?? '카테고리 미정'}</span>

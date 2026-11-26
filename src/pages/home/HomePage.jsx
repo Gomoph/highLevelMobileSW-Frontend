@@ -9,7 +9,7 @@ import {
   FiMapPin,
   FiPlus,
 } from 'react-icons/fi';
-import { getMeetings } from '../../api/meetings.js';
+import { getMeetings, getMeetingImageUrl } from '../../api/meetings.js';
 import { getMyProfile, updateMyProfile } from '../../api/members.js';
 import MeetingMap from '../../components/map/MeetingMap.jsx';
 import FavoritesSheet from '../favorites/FavoritesSheet.jsx';
@@ -147,7 +147,7 @@ function MeetingCard({ meeting, selected, onSelect }) {
       className={`home-meeting-card${selected ? ' is-selected' : ''}`}
       onClick={onSelect}>
       <span className="home-meeting-image" aria-hidden="true">
-        <FiImage aria-hidden="true" />
+        {meeting.imageUrls?.[0] ? <img src={getMeetingImageUrl(meeting.imageUrls[0])} alt="" /> : <FiImage aria-hidden="true" />}
       </span>
       <span className="home-meeting-info">
         <span className="home-meeting-meta">

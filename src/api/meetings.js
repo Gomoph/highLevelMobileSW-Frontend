@@ -2,12 +2,18 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 // 모임 등록
-export async function createMeeting({ token, meeting }) {
+export function getMeetingImageUrl(imageUrl) {
+  if (!imageUrl) return '';
+  if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
+  return `${API_BASE_URL}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+}
+export async function createMeeting({ token, meeting, images = [] }) {
   const formData = new FormData();
   formData.append(
     'meeting',
     new Blob([JSON.stringify(meeting)], { type: 'application/json' }),
   );
+  images.slice(0, 3).forEach((image) => formData.append('images', image));
 
   const response = await fetch(`${API_BASE_URL}/api/meetings`, {
     method: 'POST',

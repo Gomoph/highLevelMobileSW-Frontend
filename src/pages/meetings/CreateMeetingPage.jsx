@@ -159,7 +159,7 @@ export default function CreateMeetingPage({
   // 이미지 추가
   function addImages(event) {
     const selected = Array.from(event.target.files || []);
-    setImages((current) => [...current, ...selected].slice(0, 5));
+    setImages((current) => [...current, ...selected].slice(0, 3));
     event.target.value = '';
   }
 
@@ -207,6 +207,7 @@ export default function CreateMeetingPage({
           startsAt: `${date}T${time}:00`,
           maxMembers: count,
         },
+      images,
       });
 
       setMessage(
@@ -290,7 +291,7 @@ export default function CreateMeetingPage({
               type="button"
               className="create-image-add"
               onClick={() => imageInput.current?.click()}
-              disabled={images.length >= 5}>
+              disabled={images.length >= 3}>
               <Icon name="upload" />
               <span>사진 추가</span>
             </button>
@@ -314,7 +315,7 @@ export default function CreateMeetingPage({
             ))}
           </div>
           <p className="create-help">
-            이미지는 현재 백엔드 등록 필드에 없어 요청에 포함되지 않습니다.
+            선택한 사진 중 첫 번째 사진이 대표 이미지예요. 최대 3장까지 추가할 수 있어요.
           </p>
         </FormSection>
 
