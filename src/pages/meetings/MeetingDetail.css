@@ -68,6 +68,13 @@
   margin-left: auto;
   color: #606a79;
 }
+.meeting-detail-header .meeting-detail-delete {
+  margin-left: auto;
+  color: #606a79;
+}
+.meeting-detail-header .meeting-detail-delete + .meeting-detail-share {
+  margin-left: 0;
+}
 .meeting-detail-header .meeting-detail-share + .meeting-detail-favorite {
   margin-left: 0;
 }
@@ -255,5 +262,6 @@
 .meeting-modal-actions button { min-height:42px; padding:0 14px; border-radius:7px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
 .meeting-modal-actions .meeting-modal-secondary { border:1px solid #d8dce4; color:#626b7b; background:#fff; }
 .meeting-modal-actions .meeting-modal-primary { border:0; color:var(--brand-ink); background:var(--brand-primary); }
+.meeting-modal-actions .meeting-modal-danger { border:0; color:#fff; background:#d84a4a; }
 .meeting-modal-actions button:disabled { opacity:.55; cursor:not-allowed; }
 .meeting-announcement-text { min-height:68px; white-space:pre-wrap; overflow-wrap:anywhere; }

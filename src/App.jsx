@@ -280,6 +280,13 @@ export default function App() {
               ),
             );
           }}
+          onMeetingDeleted={(meetingId) => {
+            setSelectedMeeting(null);
+            setFavoriteMeetings((current) =>
+              current.filter((meeting) => meeting.id !== meetingId),
+            );
+            setScreen(detailReturnScreen);
+          }}
           onBack={() => setScreen(detailReturnScreen)}
         />
       </>

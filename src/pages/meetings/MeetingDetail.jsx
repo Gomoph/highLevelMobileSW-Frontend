@@ -8,11 +8,13 @@ import {
   FiImage,
   FiMapPin,
   FiShare2,
+  FiTrash2,
   FiUsers,
 } from 'react-icons/fi';
 import {
   getMeetingImageUrl,
   confirmMeeting,
+  deleteMeeting,
   getMeetingById,
   getMeetingParticipation,
   joinMeeting,
@@ -23,6 +25,7 @@ import './MeetingDetail.css';
 const DETAIL_ICONS = {
   back: FiArrowLeft,
   share: FiShare2,
+  trash: FiTrash2,
   heart: FiHeart,
   pin: FiMapPin,
   clock: FiClock,
@@ -43,10 +46,13 @@ export default function MeetingDetail({
   isFavorite = false,
   onToggleFavorite,
   onMeetingUpdate,
+  onMeetingDeleted,
 }) {
   const [notice, setNotice] = useState('');
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [announcementModalOpen, setAnnouncementModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [announcementDraft, setAnnouncementDraft] = useState('');
   const [confirmationSubmitting, setConfirmationSubmitting] = useState(false);
   const [participationLoading, setParticipationLoading] = useState(true);
@@ -148,6 +154,20 @@ export default function MeetingDetail({
     finally { setConfirmationSubmitting(false); }
   };
 
+  const handleDeleteMeeting = async () => {
+    if (!meeting?.id || !token || deleting) return;
+    setDeleting(true);
+    try {
+      await deleteMeeting(token, meeting.id);
+      setDeleteModalOpen(false);
+      onMeetingDeleted?.(meeting.id);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : '모임을 삭제하지 못했어요.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const shareMeeting = async () => {
     if (!meeting?.id) return;
     const shareUrl = new URL(window.location.href);
@@ -183,6 +203,15 @@ export default function MeetingDetail({
           <DetailIcon name="back" />
         </button>
         <h1>모임 상세</h1>
+        {meeting && participation.host && (
+          <button
+            type="button"
+            className="meeting-detail-delete"
+            aria-label="모임 삭제"
+            onClick={() => setDeleteModalOpen(true)}>
+            <DetailIcon name="trash" />
+          </button>
+        )}
         {meeting && (
           <button
             type="button"
@@ -312,6 +341,37 @@ export default function MeetingDetail({
                 <h2 id="meeting-announcement-title">모임 공지</h2>
                 <p className="meeting-announcement-text">{participation.announcement || meeting.announcement || '등록된 공지가 없습니다.'}</p>
                 <div className="meeting-modal-actions"><button type="button" className="meeting-modal-primary" onClick={() => setAnnouncementModalOpen(false)}>닫기</button></div>
+              </section>
+            </div>
+          )}
+          {deleteModalOpen && (
+            <div
+              className="meeting-modal-backdrop"
+              onClick={() => !deleting && setDeleteModalOpen(false)}>
+              <section
+                className="meeting-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-meeting-title"
+                onClick={(event) => event.stopPropagation()}>
+                <h2 id="delete-meeting-title">모임을 삭제할까요?</h2>
+                <p>모임과 참가 정보, 찜 목록이 삭제되고 등록한 사진 파일도 정리돼요. 삭제한 모임은 복구할 수 없어요.</p>
+                <div className="meeting-modal-actions">
+                  <button
+                    type="button"
+                    className="meeting-modal-secondary"
+                    disabled={deleting}
+                    onClick={() => setDeleteModalOpen(false)}>
+                    돌아가기
+                  </button>
+                  <button
+                    type="button"
+                    className="meeting-modal-danger"
+                    disabled={deleting}
+                    onClick={handleDeleteMeeting}>
+                    {deleting ? '삭제 중' : '모임 삭제'}
+                  </button>
+                </div>
               </section>
             </div>
           )}

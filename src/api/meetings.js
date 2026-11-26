@@ -103,6 +103,21 @@ export async function confirmMeeting(token, meetingId, announcement) {
   if (!response.ok) throw new Error(result?.message || result?.detail || `모임 확정에 실패했어요. (${response.status})`);
   return result;
 }
+
+export async function deleteMeeting(token, meetingId) {
+  const response = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(
+      result?.message || result?.detail || `모임 삭제에 실패했어요. (${response.status})`,
+    );
+  }
+  return result;
+}
+
 async function requestParticipation(token, meetingId, method = 'GET') {
   const response = await fetch(
     `${API_BASE_URL}/api/meetings/${meetingId}/participation`,
