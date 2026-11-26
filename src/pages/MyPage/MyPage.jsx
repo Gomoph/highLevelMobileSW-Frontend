@@ -9,7 +9,11 @@ import {
   FiX,
 } from 'react-icons/fi';
 import { getMyProfile, updateMyProfile } from '../../api/members.js';
-import { getMyMeetings } from '../../api/meetings.js';
+import {
+  getJoinedMeetings,
+  getMeetingImageUrl,
+  getMyMeetings,
+} from '../../api/meetings.js';
 import './MyPage.css';
 
 const MYPAGE_ICONS = {
@@ -44,7 +48,11 @@ function MeetingCard({ meeting, status, onClick }) {
       </div>
       <div className="mypage-meeting-card-body">
         <span className="mypage-meeting-image" aria-hidden="true">
-          <MyPageIcon name="image" />
+          {meeting.imageUrls?.[0] ? (
+            <img src={getMeetingImageUrl(meeting.imageUrls[0])} alt="" loading="lazy" />
+          ) : (
+            <MyPageIcon name="image" />
+          )}
         </span>
         <span className="mypage-meeting-info">
           <span className="mypage-meeting-category">
@@ -76,7 +84,7 @@ export default function MyPage({
   address = '',
   introduction = '',
   interests = [],
-  joinedMeetings = [],
+  joinedMeetings: joinedFromProps = [],
   hostedMeetings: hostedFromProps = [],
   savedCount = 0,
   onOpenSaved,
@@ -100,6 +108,7 @@ export default function MyPage({
   });
   const [draftProfile, setDraftProfile] = useState(profile);
   const [hostedMeetings, setHostedMeetings] = useState(hostedFromProps);
+  const [joinedMeetings, setJoinedMeetings] = useState(joinedFromProps);
   const displayId = profile.userId ?? user?.userId ?? userId;
 
   const meetings = activity === 'joined' ? joinedMeetings : hostedMeetings;
@@ -135,6 +144,30 @@ export default function MyPage({
       });
 
     // 토큰 없을 때 API 요청 건너뛰는 검사
+    return () => {
+      isCurrent = false;
+    };
+  }, [token, showNotice]);
+
+  // 참가 신청한 모임 불러오기
+  useEffect(() => {
+    if (!token) return undefined;
+
+    let isCurrent = true;
+    getJoinedMeetings(token)
+      .then((data) => {
+        if (isCurrent) setJoinedMeetings(Array.isArray(data) ? data : []);
+      })
+      .catch((error) => {
+        if (isCurrent) {
+          showNotice(
+            error instanceof Error
+              ? error.message
+              : '참여 예정 모임을 불러오지 못했어요.',
+          );
+        }
+      });
+
     return () => {
       isCurrent = false;
     };

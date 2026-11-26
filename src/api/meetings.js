@@ -83,6 +83,19 @@ export async function getMyMeetings(token) {
   return response.json();
 }
 
+// 내가 참가 신청한 모임 목록
+export async function getJoinedMeetings(token) {
+  const response = await fetch(`${API_BASE_URL}/api/meetings/participating`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`참여 예정 모임을 불러오지 못했습니다. (${response.status})`);
+  }
+
+  return response.json();
+}
+
 // 공유 링크로 진입한 모임 상세 정보
 export async function getMeetingById(meetingId) {
   const response = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}`);
