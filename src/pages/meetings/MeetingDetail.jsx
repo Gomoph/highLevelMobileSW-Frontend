@@ -11,6 +11,7 @@ import {
   FiUsers,
 } from 'react-icons/fi';
 import {
+  getMeetingById,
   getMeetingParticipation,
   joinMeeting,
   leaveMeeting,
@@ -101,13 +102,24 @@ export default function MeetingDetail({
       const result = participation.joined
         ? await leaveMeeting(token, meeting.id)
         : await joinMeeting(token, meeting.id);
-      setParticipation(result);
+      let updatedParticipation = result;
+      try {
+        const latestMeeting = await getMeetingById(meeting.id);
+        updatedParticipation = {
+          ...result,
+          currentMembers: latestMeeting.currentMembers ?? result.currentMembers,
+          maxMembers: latestMeeting.maxMembers ?? result.maxMembers,
+        };
+      } catch {
+        // 참여 처리는 완료됐으므로 최신 상세 조회가 실패하면 변경 응답을 사용합니다.
+      }
+      setParticipation(updatedParticipation);
       onMeetingUpdate?.(meeting.id, {
-        currentMembers: result.currentMembers,
-        maxMembers: result.maxMembers,
+        currentMembers: updatedParticipation.currentMembers,
+        maxMembers: updatedParticipation.maxMembers,
       });
       setNotice(
-        result.joined ? '모임 참여가 완료되었어요.' : '모임 참여를 취소했어요.',
+        updatedParticipation.joined ? '모임 참여가 완료되었어요.' : '모임 참여를 취소했어요.',
       );
     } catch (error) {
       setNotice(
