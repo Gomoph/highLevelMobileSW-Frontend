@@ -8,6 +8,7 @@ import {
   FiMapPin,
   FiUsers,
 } from 'react-icons/fi';
+import { getMeetingImageUrl } from '../../api/meetings.js';
 import './FavoritesSheet.css';
 
 const CATEGORIES = ['전체', '운동', '카페', '맛집', '전시', '보드게임', '스터디', '기타'];
@@ -43,7 +44,13 @@ function FavoriteMeetingCard({ meeting, onSelect, onRemove }) {
   return (
     <article className="favorite-meeting-card">
       <button className="favorite-meeting-main" type="button" onClick={onSelect}>
-        <span className="favorite-meeting-image" aria-hidden="true"><CardIcon name="image" /></span>
+        <span className="favorite-meeting-image" aria-hidden="true">
+          {meeting.imageUrls?.[0] ? (
+            <img src={getMeetingImageUrl(meeting.imageUrls[0])} alt="" loading="lazy" />
+          ) : (
+            <CardIcon name="image" />
+          )}
+        </span>
         <span className="favorite-meeting-info">
           <span className="favorite-meeting-meta">
             <span>{meeting.category ?? meeting.cat ?? '모임'}</span>
